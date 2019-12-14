@@ -36,3 +36,8 @@ def me():
 def langs():
     for code, lang in be.languages.items():
         click.echo(f'{code}\t {lang}')
+
+@cli.command()
+def sections():
+    for sec in be.me.sections:
+        click.echo(sec.description)

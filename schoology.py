@@ -28,6 +28,10 @@ class User:
         self.sc = sc
         self.__dict__.update(props)
 
+    @cached_property
+    def sections(self):
+        return [Section(self.sc, d) for d in self.sc._get('users/' + str(self.id) + '/sections')['section']]
+
 
 class School:
     def __init__(self, sc, props):
@@ -40,6 +44,11 @@ class School:
 
 
 class Building:
+    def __init__(self, sc, props):
+        self.sc = sc
+        self.__dict__.update(props)
+
+class Section:
     def __init__(self, sc, props):
         self.sc = sc
         self.__dict__.update(props)
