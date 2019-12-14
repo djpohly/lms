@@ -10,20 +10,22 @@ Configuration for `lms` lives in `$XDG_CONFIG_HOME/lms.conf`.  This is
 [configparser](https://docs.python.org/3/library/configparser.html)
 module.  Example, with documentation:
 
-    # Overall configuration options go in the lms section
-    [lms]
-    # Hostname of your institution's learning management system
-    host = schoology.myschool.edu
-    # Which LMS to use
-    # Options: schoology
-    backend = schoology
+````ini
+# Overall configuration options go in the lms section
+[lms]
+# Hostname of your institution's learning management system
+host = schoology.myschool.edu
+# Which LMS to use
+# Options: schoology
+backend = schoology
 
-    # Backend-specific options for Schoology
-    [schoology]
-    # Consumer key and secret for OAuth authentication
-    # Obtain these from https://schoology.myschool.edu/api
-    key = 31415926535897932384626433832795028841971
-    secret = 31415926535897932384626433832795
+# Backend-specific options for Schoology
+[schoology]
+# Consumer key and secret for OAuth authentication
+# Obtain these from https://schoology.myschool.edu/api
+key = 31415926535897932384626433832795028841971
+secret = 31415926535897932384626433832795
+````
 
 
 ## Things I would like to be able to do
