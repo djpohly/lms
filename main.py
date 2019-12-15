@@ -1,4 +1,4 @@
-from schoology2 import *
+from schoology import *
 import click
 from click_repl import repl
 import configparser
@@ -25,12 +25,12 @@ def config():
 @cli.command()
 def schools():
     for school in be.schools:
-        click.echo(f'[{school.id}] {school.title}')
+        click.echo(school)
 
 @cli.command()
 def me():
     gotta = be.me
-    click.echo(gotta.name_display)
+    click.echo(gotta)
 
 @cli.command()
 def langs():
@@ -40,4 +40,4 @@ def langs():
 @cli.command()
 def sections():
     for sec in be.me.sections:
-        click.echo(sec.description)
+        click.echo(sec)

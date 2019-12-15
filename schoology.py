@@ -42,14 +42,20 @@ class RestObject:
     def __init_subclass__(cls, rest_query='', **kwargs):
         """Initialize class properties for caching"""
         cls._cache = {}
-        cls._QUERY_STR = rest_query
+        cls._rest_query = rest_query
         super().__init_subclass__(**kwargs)
 
     def __init__(self, sc, props):
         """Initialize a new local object with the given properties"""
         self._sc = sc
         self._prop = props.copy()
-        type(self)._cache[self._prop['id']] = self
+        type(self)._cache[str(self['id'])] = self
+
+    def __repr__(self):
+        return f"{type(self).__name__}<{self['id']}>"
+
+    def __str__(self):
+        return str(self['title'])
 
     def __getitem__(self, key):
         """Return the property for a given key"""
@@ -62,26 +68,21 @@ class RestObject:
     @classmethod
     def get(cls, sc, ident):
         """Get an object by its "id" property"""
+        ident = str(ident)
         try:
             item = cls._cache[ident]
         except KeyError:
-            item = cls(sc, sc._get(cls.rest_query.format(ident)))
+            item = cls(sc, sc._get(cls._rest_query.format(ident)))
         return item
 
 
 class School(RestObject, rest_query='schools/{}'):
     """Most basic grouping of courses, groups, and users"""
 
-    def __str__(self):
-        return self['title']
-
-    def __repr__(self):
-        return f'School<{self["title"]}>'
-
     @cached_property
     def buildings(self):
         return [Building(self._sc, d) for d in
-                self._sc._get(f'schools/{self["id"]}/buildings')]
+                self._sc._get(f"schools/{self['id']}/buildings")]
 
 
 # Query is not a typo (see Schoology API reference)
@@ -96,13 +97,14 @@ class User(RestObject, rest_query='users/{}'):
     def __str__(self):
         return self['name_display']
 
-    def __repr__(self):
-        return f'User<{self["name_display"]}>'
+    @property
+    def role(self):
+        return Role.get(self._sc, self['role_id'])
 
     @cached_property
     def sections(self):
         return [Section(self._sc, d) for d in
-                self._sc._get(f'users/{self["id"]}/sections')['section']]
+                self._sc._get(f"users/{self['id']}/sections")['section']]
 
 
 class Group(RestObject, rest_query='groups/{}'):
@@ -115,22 +117,29 @@ class Course(RestObject, rest_query='courses/{}'):
     """Container for course sections"""
     pass
 
-
 class Section(RestObject, rest_query='sections/{}'):
     """Section of a parent course in which teachers and students are
     enrolled"""
 
+    def __str__(self):
+        return f"{self['course_title'].strip()} ({self.grading_periods[0]['title'].strip()})"
+
     @property
     def school(self):
-        return School.get(self._sc, self._prop['school_id'])
+        return School.get(self._sc, self['school_id'])
 
     @property
     def building(self):
-        return Building.get(self._sc, self._prop['building_id'])
+        return Building.get(self._sc, self['building_id'])
 
     @property
     def course(self):
-        return Course.get(self._sc, self._prop['course_id'])
+        return Course.get(self._sc, self['course_id'])
+
+    @cached_property
+    def grading_periods(self):
+        return [GradingPeriod.get(self._sc, gp) for gp in
+                self['grading_periods']]
 
 
 class GradingPeriod(RestObject, rest_query='gradingperiods/{}'):
@@ -143,9 +152,11 @@ class Role(RestObject, rest_query='roles/{}'):
     pass
 
 
-class Message(RestObject, rest_query='messages/{}'):
+class Message(RestObject, rest_query='messages/inbox/{}'):
     """Private messages that can be sent and shared"""
-    pass
+
+    def __str__(self):
+        return self['id']
 
 
 class Collection(RestObject, rest_query='collections/{}'):
