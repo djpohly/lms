@@ -1,4 +1,4 @@
-from schoology import *
+from schoology2 import *
 import click
 from click_repl import repl
 import configparser
