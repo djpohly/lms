@@ -1,4 +1,5 @@
 import schoolopy
+import collections.abc
 from cached_property import cached_property
 
 
@@ -39,7 +40,7 @@ class Schoology:
                 self._get('collections')['collection']]
 
 
-class RestObject:
+class RestObject(collections.abc.Hashable):
     def __init_subclass__(cls, rest_query='', **kwargs):
         """Initialize class properties for caching"""
         cls._cache = {}
@@ -61,6 +62,14 @@ class RestObject:
     def __getitem__(self, key):
         """Return the property for a given key"""
         return self._prop[key]
+
+    def __hash__(self):
+        return int(self['id'])
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self['id'] == other['id']
 
     def keys(self):
         """Return the keys available for this object"""
