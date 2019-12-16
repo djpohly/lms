@@ -75,6 +75,9 @@ class RestObject(collections.abc.Hashable):
             return NotImplemented
         return self['id'] == other['id']
 
+    def rest_path(self):
+        return type(self)._rest_query.format(self['id'])
+
     @classmethod
     def for_id(cls, sc, ident):
         """Get an object by its "id" property"""
