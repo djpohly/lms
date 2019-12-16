@@ -1,6 +1,9 @@
 import schoolopy
 import collections.abc
+import click_log
 from cached_property import cached_property
+
+log = click_log.basic_config('lms')
 
 
 class Schoology:
@@ -51,6 +54,7 @@ class RestObject(collections.abc.Hashable):
         """Initialize a new local object with the given properties"""
         self._sc = sc
         self._prop = props.copy()
+        log.debug(f"caching {self!r}")
         type(self)._cache[int(self['id'])] = self
 
     def __repr__(self):
