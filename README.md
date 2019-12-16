@@ -13,8 +13,6 @@ module.  Example, with documentation:
 ````ini
 # Overall configuration options go in the lms section
 [lms]
-# Hostname of your institution's learning management system
-host = schoology.myschool.edu
 # Which LMS to use
 # Options: schoology
 backend = schoology
