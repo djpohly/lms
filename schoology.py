@@ -11,6 +11,7 @@ class Schoology:
         self.objs = {}
 
     def get(self, cls, ident):
+        ident = int(ident)
         try:
             item = self.objs[cls, ident]
         except KeyError:
@@ -49,7 +50,7 @@ class RestObject:
         """Initialize a new local object with the given properties"""
         self._sc = sc
         self._prop = props.copy()
-        type(self)._cache[str(self['id'])] = self
+        type(self)._cache[int(self['id'])] = self
 
     def __repr__(self):
         return f"{type(self).__name__}<{self['id']}>"
@@ -71,7 +72,7 @@ class RestObject:
     @classmethod
     def get(cls, sc, ident):
         """Get an object by its "id" property"""
-        ident = str(ident)
+        ident = int(ident)
         try:
             item = cls._cache[ident]
         except KeyError:
