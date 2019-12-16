@@ -58,9 +58,6 @@ class RestObject:
     def __str__(self):
         return str(self['title'])
 
-    def __lt__(self, other):
-        return self['title'] < other['title']
-
     def __getitem__(self, key):
         """Return the property for a given key"""
         return self._prop[key]
@@ -112,7 +109,7 @@ class User(RestObject, rest_query='users/{}'):
 
     @cached_property
     def courses(self):
-        return sorted({s.course for s in self.sections})
+        return sorted({s.course for s in self.sections}, key=str)
 
 
 class Group(RestObject, rest_query='groups/{}'):
