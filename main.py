@@ -4,17 +4,24 @@ from click_repl import repl
 import configparser
 import xdg
 
+BACKENDS = {
+        'schoology': Schoology,
+}
 CONFIG_FILE = xdg.XDG_CONFIG_HOME/'lms.conf'
+
 conf = configparser.ConfigParser(default_section=None)
 conf.read(CONFIG_FILE)
-be = Schoology(conf['schoology'])
 
+be = None
 cur_course = None
 
 
 @click.group(invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
+    global be
+    if be is None:
+        be = BACKENDS[conf['lms']['backend']](conf)
     if ctx.invoked_subcommand is None:
         repl(ctx, allow_system_commands=False,
                 prompt_kwargs={'completer': None})

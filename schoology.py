@@ -4,7 +4,7 @@ from cached_property import cached_property
 
 class Schoology:
     def __init__(self, config):
-        self.conf = dict(config)
+        self.conf = config['schoology']
         auth = schoolopy.Auth(self.conf['key'], self.conf['secret'])
         self.sc = schoolopy.Schoology(auth)
         self._get = self.sc._get
