@@ -71,10 +71,6 @@ class RestObject(collections.abc.Hashable):
             return NotImplemented
         return self['id'] == other['id']
 
-    def keys(self):
-        """Return the keys available for this object"""
-        return self._prop.keys()
-
     @classmethod
     def get(cls, sc, ident):
         """Get an object by its "id" property"""
