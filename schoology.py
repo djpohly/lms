@@ -72,7 +72,7 @@ class RestObject(collections.abc.Hashable):
         return self['id'] == other['id']
 
     @classmethod
-    def get(cls, sc, ident):
+    def for_id(cls, sc, ident):
         """Get an object by its "id" property"""
         ident = int(ident)
         try:
@@ -105,7 +105,7 @@ class User(RestObject, rest_query='users/{}'):
 
     @property
     def role(self):
-        return Role.get(self._sc, self['role_id'])
+        return Role.for_id(self._sc, self['role_id'])
 
     @cached_property
     def sections(self):
@@ -136,19 +136,19 @@ class Section(RestObject, rest_query='sections/{}'):
 
     @property
     def school(self):
-        return School.get(self._sc, self['school_id'])
+        return School.for_id(self._sc, self['school_id'])
 
     @property
     def building(self):
-        return Building.get(self._sc, self['building_id'])
+        return Building.for_id(self._sc, self['building_id'])
 
     @property
     def course(self):
-        return Course.get(self._sc, self['course_id'])
+        return Course.for_id(self._sc, self['course_id'])
 
     @cached_property
     def grading_periods(self):
-        return [GradingPeriod.get(self._sc, gp) for gp in
+        return [GradingPeriod.for_id(self._sc, gp) for gp in
                 self['grading_periods']]
 
 
