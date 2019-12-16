@@ -76,7 +76,7 @@ class RestObject(collections.abc.Hashable):
         return self['id'] == other['id']
 
     def rest_path(self):
-        return type(self)._rest_query.format(self['id'])
+        return type(self)._rest_query.format_map(self)
 
     @classmethod
     def for_id(cls, sc, ident):
@@ -85,11 +85,11 @@ class RestObject(collections.abc.Hashable):
         try:
             item = cls._cache[ident]
         except KeyError:
-            item = cls(sc, sc._get(cls._rest_query.format(ident)))
+            item = cls(sc, sc._get(cls._rest_query.format(id=ident)))
         return item
 
 
-class School(RestObject, rest_query='schools/{}'):
+class School(RestObject, rest_query='schools/{id}'):
     """Most basic grouping of courses, groups, and users"""
 
     @cached_property
@@ -99,12 +99,12 @@ class School(RestObject, rest_query='schools/{}'):
 
 
 # Query is not a typo (see Schoology API reference)
-class Building(RestObject, rest_query='schools/{}'):
+class Building(RestObject, rest_query='schools/{id}'):
     """Further separation of courses, groups, and users (e.g. campuses)"""
     pass
 
 
-class User(RestObject, rest_query='users/{}'):
+class User(RestObject, rest_query='users/{id}'):
     """Account corresponding to a user"""
 
     def __str__(self):
@@ -124,17 +124,17 @@ class User(RestObject, rest_query='users/{}'):
         return sorted({s.course for s in self.sections}, key=str)
 
 
-class Group(RestObject, rest_query='groups/{}'):
+class Group(RestObject, rest_query='groups/{id}'):
     """Non-academic version of course section; holds members, events,
     documents, etc."""
     pass
 
 
-class Course(RestObject, rest_query='courses/{}'):
+class Course(RestObject, rest_query='courses/{id}'):
     """Container for course sections"""
     pass
 
-class Section(RestObject, rest_query='sections/{}'):
+class Section(RestObject, rest_query='sections/{id}'):
     """Section of a parent course in which teachers and students are
     enrolled"""
 
@@ -159,23 +159,23 @@ class Section(RestObject, rest_query='sections/{}'):
                 self['grading_periods']]
 
 
-class GradingPeriod(RestObject, rest_query='gradingperiods/{}'):
+class GradingPeriod(RestObject, rest_query='gradingperiods/{id}'):
     """Period during which a course section is active"""
     pass
 
 
-class Role(RestObject, rest_query='roles/{}'):
+class Role(RestObject, rest_query='roles/{id}'):
     """Collection of user permissions"""
     pass
 
 
-class Message(RestObject, rest_query='messages/inbox/{}'):
+class Message(RestObject, rest_query='messages/inbox/{id}'):
     """Private messages that can be sent and shared"""
 
     def __str__(self):
         return self['id']
 
 
-class Collection(RestObject, rest_query='collections/{}'):
+class Collection(RestObject, rest_query='collections/{id}'):
     """Collections and templates for user and group resources"""
     pass
