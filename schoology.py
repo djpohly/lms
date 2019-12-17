@@ -133,7 +133,11 @@ class User(RestObject, rest_query='users/{id}'):
 class Group(RestObject, rest_query='groups/{id}'):
     """Non-academic version of course section; holds members, events,
     documents, etc."""
-    pass
+
+    @cached_property
+    def enrollments(self):
+        return [Enrollment(self._sc, d, realm=self) for d in
+                self._sc._get(self.rest_path() + '/enrollments')['enrollment']]
 
 
 class Course(RestObject, rest_query='courses/{id}'):
@@ -164,6 +168,11 @@ class Section(RestObject, rest_query='sections/{id}'):
         return [GradingPeriod.for_id(self._sc, gp) for gp in
                 self['grading_periods']]
 
+    @cached_property
+    def enrollments(self):
+        return [Enrollment(self._sc, d, realm=self) for d in
+                self._sc._get(self.rest_path() + '/enrollments')['enrollment']]
+
 
 class GradingPeriod(RestObject, rest_query='gradingperiods/{id}'):
     """Period during which a course section is active"""
@@ -185,3 +194,11 @@ class Message(RestObject, rest_query='messages/inbox/{id}'):
 class Collection(RestObject, rest_query='collections/{id}'):
     """Collections and templates for user and group resources"""
     pass
+
+
+class Enrollment(RestObject, rest_query='enrollments/{id}'):
+    """Association between a user and a course or group"""
+
+    @property
+    def user(self):
+        return User.for_id(self._sc, self['uid'])
