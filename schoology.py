@@ -76,18 +76,22 @@ class RestObject(collections.abc.Hashable):
             return NotImplemented
         return self['id'] == other['id']
 
+    @classmethod
+    def build_rest_path(cls, ident, realm=None):
+        base = '' if realm is None else realm.rest_path() + '/'
+        return base + cls._rest_query.format(id=ident)
+
     def rest_path(self):
-        base = '' if self.realm is None else self.realm.rest_path() + '/'
-        return base + type(self)._rest_query.format_map(self)
+        return self.build_rest_path(self['id'], realm=self.realm)
 
     @classmethod
-    def for_id(cls, sc, ident):
+    def for_id(cls, sc, ident, realm=None):
         """Get an object by its "id" property"""
         ident = int(ident)
         try:
             item = cls._cache[ident]
         except KeyError:
-            item = cls(sc, sc._get(cls._rest_query.format(id=ident)))
+            item = cls(sc, sc._get(cls.build_rest_path(ident, realm)))
         return item
 
 
@@ -97,7 +101,7 @@ class School(RestObject, rest_query='schools/{id}'):
     @cached_property
     def buildings(self):
         return [Building(self._sc, d) for d in
-                self._sc._get(f"schools/{self['id']}/buildings")]
+                self._sc._get(self.rest_path() + '/buildings')]
 
 
 # Query is not a typo (see Schoology API reference)
@@ -119,7 +123,7 @@ class User(RestObject, rest_query='users/{id}'):
     @cached_property
     def sections(self):
         return [Section(self._sc, d) for d in
-                self._sc._get(f"users/{self['id']}/sections")['section']]
+                self._sc._get(self.rest_path() + '/sections')['section']]
 
     @cached_property
     def courses(self):
