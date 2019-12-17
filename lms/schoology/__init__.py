@@ -9,8 +9,7 @@ log = click_log.basic_config('lms')
 class Schoology:
     def __init__(self, config):
         self.conf = config['schoology']
-        self.sc = SchoologyApi(self.conf['key'], self.conf['secret'])
-        self._get = self.sc._get
+        self.api = SchoologyApi(self.conf['key'], self.conf['secret'])
         self.objs = {}
 
     def get(self, cls, ident):
@@ -24,22 +23,22 @@ class Schoology:
 
     @cached_property
     def me(self):
-        return User(self, self._get('users/me'))
+        return User(self, self.api._get('users/me'))
 
     @cached_property
     def languages(self):
         return {l['language_code']: l['language_name'] for l in
-                self._get('users/languages')['language']}
+                self.api._get('users/languages')['language']}
 
     @cached_property
     def schools(self):
         return [School(self, d) for d in
-                self._get('schools')['school']]
+                self.api._get('schools')['school']]
 
     @cached_property
     def collections(self):
         return [Collection(self, d) for d in
-                self._get('collections')['collection']]
+                self.api._get('collections')['collection']]
 
 
 class RestObject(collections.abc.Hashable):
@@ -90,7 +89,7 @@ class RestObject(collections.abc.Hashable):
         try:
             item = cls._cache[ident]
         except KeyError:
-            item = cls(sc, sc._get(cls.build_rest_path(ident, realm)))
+            item = cls(sc, sc.api._get(cls.build_rest_path(ident, realm)))
         return item
 
 
@@ -100,7 +99,7 @@ class School(RestObject, rest_query='schools/{id}'):
     @cached_property
     def buildings(self):
         return [Building(self._sc, d) for d in
-                self._sc._get(self.rest_path() + '/buildings')]
+                self._sc.api._get(self.rest_path() + '/buildings')]
 
 
 # Query is not a typo (see Schoology API reference)
@@ -122,7 +121,7 @@ class User(RestObject, rest_query='users/{id}'):
     @cached_property
     def sections(self):
         return [Section(self._sc, d) for d in
-                self._sc._get(self.rest_path() + '/sections')['section']]
+                self._sc.api._get(self.rest_path() + '/sections')['section']]
 
     @cached_property
     def courses(self):
@@ -136,7 +135,7 @@ class Group(RestObject, rest_query='groups/{id}'):
     @cached_property
     def enrollments(self):
         return [Enrollment(self._sc, d, realm=self) for d in
-                self._sc._get(self.rest_path() + '/enrollments')['enrollment']]
+                self._sc.api._get(self.rest_path() + '/enrollments')['enrollment']]
 
 
 class Course(RestObject, rest_query='courses/{id}'):
@@ -170,7 +169,7 @@ class Section(RestObject, rest_query='sections/{id}'):
     @cached_property
     def enrollments(self):
         return [Enrollment(self._sc, d, realm=self) for d in
-                self._sc._get(self.rest_path() + '/enrollments')['enrollment']]
+                self._sc.api._get(self.rest_path() + '/enrollments')['enrollment']]
 
 
 class GradingPeriod(RestObject, rest_query='gradingperiods/{id}'):
