@@ -127,15 +127,22 @@ class SchoologyApi:
         oauth_session._populate_attributes(token)
         return token
 
-    def _get(self, path):
+    def _get(self, path, **kwargs):
         """
         GET data from a given endpoint.
 
         :param path: Path (following API root) to endpoint.
+        :param \*\*kwargs: Optional arguments to pass to ``request``.
         :return: JSON response.
         """
+        kwargs.setdefault('params', {})
+        kwargs['params'].setdefault('start', self.start)
+        kwargs['params'].setdefault('limit', self.limit)
+        kwargs.setdefault('headers', {})
+        kwargs['headers'].update(self._request_header())
+        kwargs['auth'] = self.oauth.auth
         try:
-            response = self.oauth.get(url='%s%s?limit=%s&start=%s' % (SchoologyApi.ROOT, path, self.limit, self.start), headers=self._request_header(), auth=self.oauth.auth)
+            response = self.oauth.get(url='%s%s' % (SchoologyApi.ROOT, path), **kwargs)
             return response.json()
         except JSONDecodeError:
             return {}
