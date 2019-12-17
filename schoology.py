@@ -50,8 +50,9 @@ class RestObject(collections.abc.Hashable):
         cls._rest_query = rest_query
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, sc, props):
+    def __init__(self, sc, props, realm=None):
         """Initialize a new local object with the given properties"""
+        self.realm = realm
         self._sc = sc
         self._prop = props.copy()
         log.debug(f"caching {self!r}")
@@ -76,7 +77,8 @@ class RestObject(collections.abc.Hashable):
         return self['id'] == other['id']
 
     def rest_path(self):
-        return type(self)._rest_query.format_map(self)
+        base = '' if self.realm is None else self.realm.rest_path() + '/'
+        return base + type(self)._rest_query.format_map(self)
 
     @classmethod
     def for_id(cls, sc, ident):
