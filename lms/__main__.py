@@ -1,4 +1,4 @@
-from schoology import Schoology
+from .schoology import Schoology
 import click
 import click_log
 from click_repl import repl
