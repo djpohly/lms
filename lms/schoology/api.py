@@ -16,18 +16,24 @@ except ImportError:
     JSONDecodeError = ValueError
 
 
+__all__ = ['SchoologyApi', 'AuthorizationError']
+
+
 class AuthorizationError(Exception):
     """
-    Called when an attempt is made to initialize a SchoologyApi instance with
-    an unauthorized Auth instance.
+    Raised when an attempt is made to initialize a SchoologyApi instance
+    without authorization
     """
     pass
 
 
-class Auth:
+class SchoologyApi:
+    ROOT = 'https://api.schoology.com/v1/'
+    limit = 20
+    start = 0
+
     def __init__(self, consumer_key, consumer_secret, domain='https://www.schoology.com', three_legged=False,
                  request_token=None, request_token_secret=None, access_token=None, access_token_secret=None):
-        self.API_ROOT = 'https://api.schoology.com/v1'
         self.DOMAIN_ROOT = domain
 
         self.consumer_key = consumer_key
@@ -41,6 +47,9 @@ class Auth:
 
         self.oauth = requests_oauthlib.OAuth1Session(self.consumer_key, self.consumer_secret)
         self.three_legged = three_legged
+
+        if not self.authorized:
+            raise AuthorizationError('Auth instance not authorized. Run authorize() after requesting authorization.')
 
     def _oauth_header(self):
         auth  = 'OAuth realm="Schoology API",'
@@ -65,14 +74,14 @@ class Auth:
         if self.authorized:
             if not self.three_legged:
                 return None
-            r = self.oauth.get(url=self.API_ROOT + '/users/me', headers=self._request_header())
+            r = self.oauth.get(url=SchoologyApi.ROOT + 'users/me', headers=self._request_header())
             if r.status_code > 400:
                 self.access_token = None
                 self.access_token_secret = None
             else:
                 return None
         if not self.request_token and not self.request_token_secret:
-            request_token_url = self.API_ROOT + '/oauth/request_token'
+            request_token_url = SchoologyApi.ROOT + '/oauth/request_token'
             fetch_response = self._fetch_token(request_token_url, self.oauth)
 
             self.request_token = fetch_response.get('oauth_token')
@@ -84,7 +93,7 @@ class Auth:
     def authorize(self):
         if self.authorized or not self.three_legged:
             return True
-        access_token_url = self.API_ROOT + '/oauth/access_token'
+        access_token_url = SchoologyApi.ROOT + '/oauth/access_token'
         self.oauth = requests_oauthlib.OAuth1Session(self.consumer_key,
                                                      self.consumer_secret,
                                                      resource_owner_key=self.request_token,
@@ -118,17 +127,6 @@ class Auth:
         oauth_session._populate_attributes(token)
         return token
 
-
-class SchoologyApi:
-    _ROOT = 'https://api.schoology.com/v1/'
-    limit = 20
-    start = 0
-
-    def __init__(self, schoology_auth):
-        if not schoology_auth.authorized:
-            raise AuthorizationError('Auth instance not authorized. Run authorize() after requesting authorization.')
-        self.schoology_auth = schoology_auth
-
     def _get(self, path):
         """
         GET data from a given endpoint.
@@ -137,7 +135,7 @@ class SchoologyApi:
         :return: JSON response.
         """
         try:
-            response = self.schoology_auth.oauth.get(url='%s%s?limit=%s&start=%s' % (self._ROOT, path, self.limit, self.start), headers=self.schoology_auth._request_header(), auth=self.schoology_auth.oauth.auth)
+            response = self.oauth.get(url='%s%s?limit=%s&start=%s' % (SchoologyApi.ROOT, path, self.limit, self.start), headers=self._request_header(), auth=self.oauth.auth)
             return response.json()
         except JSONDecodeError:
             return {}
@@ -151,7 +149,7 @@ class SchoologyApi:
         :return: JSON response.
         """
         try:
-            return self.schoology_auth.oauth.post(url='%s%s?limit=%s' % (self._ROOT, path, self.limit), json=data, headers=self.schoology_auth._request_header(), auth=self.schoology_auth.oauth.auth).json()
+            return self.oauth.post(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth).json()
         except JSONDecodeError:
             return {}
 
@@ -164,7 +162,7 @@ class SchoologyApi:
         :return: JSON response.
         """
         try:
-            return self.schoology_auth.oauth.put(url='%s%s?limit=%s' % (self._ROOT, path, self.limit), json=data, headers=self.schoology_auth._request_header(), auth=self.schoology_auth.oauth.auth).json()
+            return self.oauth.put(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth).json()
         except JSONDecodeError:
             return {}
 
@@ -174,6 +172,6 @@ class SchoologyApi:
 
         :param path: Path (following API root) to endpoint.
         """
-        return self.schoology_auth.oauth.delete(url='%s%s' % (self._ROOT, path), headers=self.schoology_auth._request_header(), auth=self.schoology_auth.oauth.auth)
+        return self.oauth.delete(url='%s%s' % (SchoologyApi.ROOT, path), headers=self._request_header(), auth=self.oauth.auth)
 
     # TODO: Implement multi-get(!) and multi-options requests. Don't seem to work right now.

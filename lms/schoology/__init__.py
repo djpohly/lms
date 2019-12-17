@@ -1,4 +1,4 @@
-from .api import Auth, SchoologyApi
+from .api import SchoologyApi
 import collections.abc
 import click_log
 from cached_property import cached_property
@@ -9,7 +9,7 @@ log = click_log.basic_config('lms')
 class Schoology:
     def __init__(self, config):
         self.conf = config['schoology']
-        self.sc = SchoologyApi(Auth(self.conf['key'], self.conf['secret']))
+        self.sc = SchoologyApi(self.conf['key'], self.conf['secret'])
         self._get = self.sc._get
         self.objs = {}
 
