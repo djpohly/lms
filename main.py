@@ -15,7 +15,7 @@ CONFIG_FILE = xdg.XDG_CONFIG_HOME/'lms.conf'
 conf = configparser.ConfigParser(default_section=None)
 conf.read(CONFIG_FILE)
 
-be = None
+be = BACKENDS[conf['lms']['backend']](conf)
 cur_course = None
 
 
@@ -23,9 +23,6 @@ cur_course = None
 @click_log.simple_verbosity_option(log)
 @click.pass_context
 def cli(ctx):
-    global be
-    if be is None:
-        be = BACKENDS[conf['lms']['backend']](conf)
     if ctx.invoked_subcommand is None:
         repl(ctx, allow_system_commands=False,
                 prompt_kwargs={'completer': None})
