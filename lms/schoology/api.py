@@ -1,6 +1,5 @@
 import random
 import time
-import json
 import requests_oauthlib
 from requests_oauthlib.oauth1_session import TokenRequestDenied
 from oauthlib.common import urldecode
@@ -9,11 +8,6 @@ try:
     from urllib.parse import urlencode
 except ImportError:
     from urllib import urlencode
-
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
 
 
 __all__ = ['SchoologyApi', 'AuthorizationError']
