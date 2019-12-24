@@ -3,7 +3,8 @@ import click_log
 from cached_property import cached_property
 
 __all__ = ['School', 'Building', 'User', 'Group', 'Course', 'Section',
-        'GradingPeriod', 'Role', 'Message', 'Collection', 'Enrollment']
+        'GradingPeriod', 'Role', 'Message', 'Collection', 'Enrollment',
+        'Assignment']
 
 log = click_log.basic_config('lms')
 
@@ -138,6 +139,11 @@ class Section(RestObject, rest_query='sections/{id}'):
         return [Enrollment(self._sc, d, realm=self) for d in
                 self._sc.api._get(self.rest_path() + '/enrollments')['enrollment']]
 
+    @cached_property
+    def assignments(self):
+        return [Assignment(self._sc, gi, realm=self) for gi in
+                self._sc.api._get(self.rest_path() + '/grade_items')['assignment']]
+
 
 class GradingPeriod(RestObject, rest_query='gradingperiods/{id}'):
     """Period during which a course section is active"""
@@ -167,3 +173,9 @@ class Enrollment(RestObject, rest_query='enrollments/{id}'):
     @property
     def user(self):
         return User.for_id(self._sc, self['uid'])
+
+
+class Assignment(RestObject, rest_query='assignments/{id}'):
+    """Container for coursework, test, or quiz"""
+
+    pass
