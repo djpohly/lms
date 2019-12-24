@@ -22,10 +22,10 @@ class RestObject(collections.abc.Hashable):
         self._sc = sc
         self._prop = props.copy()
         log.debug(f"caching {self!r}")
-        type(self)._cache[int(self['id'])] = self
+        type(self)._cache[self.id()] = self
 
     def __repr__(self):
-        return f"{type(self).__name__}<{self['id']}>"
+        return f"{type(self).__name__}<{self.id()}>"
 
     def __str__(self):
         return str(self['title'])
@@ -35,12 +35,12 @@ class RestObject(collections.abc.Hashable):
         return self._prop[key]
 
     def __hash__(self):
-        return int(self['id'])
+        return self.id()
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented
-        return self['id'] == other['id']
+        return self.id() == other.id()
 
     @classmethod
     def build_rest_path(cls, ident, realm=None):
@@ -49,6 +49,9 @@ class RestObject(collections.abc.Hashable):
 
     def rest_path(self):
         return self.build_rest_path(self['id'], realm=self.realm)
+
+    def id(self):
+        return int(self['id'])
 
     @classmethod
     def for_id(cls, sc, ident, realm=None):
