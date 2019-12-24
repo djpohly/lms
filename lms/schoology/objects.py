@@ -181,4 +181,24 @@ class Enrollment(RestObject, rest_query='enrollments/{id}'):
 class Assignment(RestObject, rest_query='assignments/{id}'):
     """Container for coursework, test, or quiz"""
 
-    pass
+    @cached_property
+    def grades(self):
+        return [Grade(self._sc, g, realm=self.realm) for g in
+                self._sc.api._get(self.realm.rest_path() + '/grades',
+                    params={'assignment_id': self['id']})['grades']['grade']]
+
+
+class Grade(RestObject, rest_query='grades/{id}'):
+    """Points assigned to users for a specific assignment"""
+
+    def id(self):
+        return (int(self['assignment_id']), int(self['enrollment_id']))
+
+    @property
+    def user(self):
+        return Enrollment.for_id(self._sc, self['enrollment_id'],
+                realm=self.realm).user
+
+    @property
+    def assignment(self):
+        return Assignment.for_id(self._sc, self['assignment_id'])
