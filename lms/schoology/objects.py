@@ -1,3 +1,4 @@
+from enum import Enum
 import collections.abc
 import click_log
 from cached_property import cached_property
@@ -172,12 +173,28 @@ class Collection(RestObject, rest_query='collections/{id}'):
     pass
 
 
+class EnrollmentStatus(Enum):
+    ACTIVE = 1
+    EXPIRED = 2
+    INVITED = 3
+    REQUESTED = 4
+    ARCHIVED = 5
+
+
 class Enrollment(RestObject, rest_query='enrollments/{id}'):
     """Association between a user and a course or group"""
 
     @property
     def user(self):
         return User.for_id(self._sc, self['uid'])
+
+    @property
+    def status(self):
+        return EnrollmentStatus(int(self['status']))
+
+    @property
+    def is_admin(self):
+        return bool(int(self['admin']))
 
 
 class Assignment(RestObject, rest_query='assignments/{id}'):
