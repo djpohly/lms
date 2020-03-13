@@ -16,11 +16,11 @@ class RestObject(collections.abc.Hashable):
         cls._rest_query = rest_query
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, sc, props, realm=None):
+    def __init__(self, sc, json, realm=None):
         """Initialize a new local object with the given properties"""
         self.realm = realm
         self._sc = sc
-        self._prop = props.copy()
+        self._json = json.copy()
         log.debug(f"caching {self!r}")
         type(self)._cache[self.id()] = self
 
@@ -32,7 +32,7 @@ class RestObject(collections.abc.Hashable):
 
     def __getitem__(self, key):
         """Return the property for a given key"""
-        return self._prop[key]
+        return self._json[key]
 
     def __hash__(self):
         return self.id()
