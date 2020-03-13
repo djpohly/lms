@@ -173,16 +173,15 @@ class Collection(RestObject, rest_query='collections/{id}'):
     pass
 
 
-class EnrollmentStatus(Enum):
-    ACTIVE = 1
-    EXPIRED = 2
-    INVITED = 3
-    REQUESTED = 4
-    ARCHIVED = 5
-
-
 class Enrollment(RestObject, rest_query='enrollments/{id}'):
     """Association between a user and a course or group"""
+
+    class Status(Enum):
+        ACTIVE = 1
+        EXPIRED = 2
+        INVITED = 3
+        REQUESTED = 4
+        ARCHIVED = 5
 
     @property
     def user(self):
@@ -190,7 +189,7 @@ class Enrollment(RestObject, rest_query='enrollments/{id}'):
 
     @property
     def status(self):
-        return EnrollmentStatus(int(self['status']))
+        return Enrollment.Status(int(self['status']))
 
     @property
     def is_admin(self):
