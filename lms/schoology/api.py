@@ -141,7 +141,7 @@ class SchoologyApi:
         except JSONDecodeError:
             return {}
 
-    def _get_depaginate(self, path, field, per_page=20, **kwargs):
+    def _get_depaginate(self, path, field, per_page=None, **kwargs):
         """
         GET a list of data from an endpoint, following pagination links.
 
@@ -150,6 +150,8 @@ class SchoologyApi:
         :param kwargs: Optional arguments to pass to ``request``.
         :return: Generator of response entries from all pages.
         """
+        if per_page is None:
+            per_page = self.limit
         kwargs.setdefault('params', {})
         kwargs['params']['start'] = 0
         kwargs['params']['limit'] = per_page
