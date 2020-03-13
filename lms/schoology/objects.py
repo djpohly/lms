@@ -111,7 +111,9 @@ class Group(RestObject, rest_query='groups/{id}'):
 
 class Course(RestObject, rest_query='courses/{id}'):
     """Container for course sections"""
-    pass
+    @property
+    def building(self):
+        return Building.for_id(self._sc, self['building_id'])
 
 class Section(RestObject, rest_query='sections/{id}'):
     """Section of a parent course in which teachers and students are
