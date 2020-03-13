@@ -93,7 +93,7 @@ class User(RestObject, rest_query='users/{id}'):
     @cached_property
     def sections(self):
         return [Section(self._sc, d) for d in
-                self._sc.api._get(self.rest_path() + '/sections')['section']]
+                self._sc.api._get_depaginate(self.rest_path() + '/sections', 'section')]
 
     @cached_property
     def courses(self):
@@ -107,7 +107,7 @@ class Group(RestObject, rest_query='groups/{id}'):
     @cached_property
     def enrollments(self):
         return [Enrollment(self._sc, d, realm=self) for d in
-                self._sc.api._get(self.rest_path() + '/enrollments')['enrollment']]
+                self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
 
 class Course(RestObject, rest_query='courses/{id}'):
@@ -143,7 +143,7 @@ class Section(RestObject, rest_query='sections/{id}'):
     @cached_property
     def enrollments(self):
         return [Enrollment(self._sc, d, realm=self) for d in
-                self._sc.api._get(self.rest_path() + '/enrollments')['enrollment']]
+                self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
     @cached_property
     def assignments(self):

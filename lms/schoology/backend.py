@@ -38,4 +38,4 @@ class Schoology:
     @cached_property
     def collections(self):
         return [Collection(self, d) for d in
-                self.api._get('collections')['collection']]
+                self.api._get_depaginate('collections', 'collection')]

@@ -141,6 +141,32 @@ class SchoologyApi:
         except JSONDecodeError:
             return {}
 
+    def _get_depaginate(self, path, field, per_page=20, **kwargs):
+        """
+        GET a list of data from an endpoint, following pagination links.
+
+        :param path: Path (following API root) to endpoint.
+        :param field: Name of the response field which contains an array of entries.
+        :param kwargs: Optional arguments to pass to ``request``.
+        :return: Generator of response entries from all pages.
+        """
+        kwargs.setdefault('params', {})
+        kwargs['params']['start'] = 0
+        kwargs['params']['limit'] = per_page
+        kwargs.setdefault('headers', {})
+        kwargs['headers'].update(self._request_header())
+        kwargs['auth'] = self.oauth.auth
+
+        while True:
+            response = self.oauth.get(url='%s%s' % (SchoologyApi.ROOT, path), **kwargs)
+            js = response.json()
+            yield from js[field]
+            if 'next' not in js['links']:
+                # Last page
+                break
+            # Doesn't actually follow the link itself, but should have same result
+            kwargs['params']['start'] += per_page
+
     def _post(self, path, data):
         """
         POST valid JSON to a given endpoint.
