@@ -23,8 +23,7 @@ class AuthorizationError(Exception):
 
 class SchoologyApi:
     ROOT = 'https://api.schoology.com/v1/'
-    limit = 20
-    start = 0
+    limit = 100
 
     def __init__(self, consumer_key, consumer_secret, domain='https://www.schoology.com', three_legged=False,
                  request_token=None, request_token_secret=None, access_token=None, access_token_secret=None):
@@ -130,7 +129,6 @@ class SchoologyApi:
         :return: JSON response.
         """
         kwargs.setdefault('params', {})
-        kwargs['params'].setdefault('start', self.start)
         kwargs['params'].setdefault('limit', self.limit)
         kwargs.setdefault('headers', {})
         kwargs['headers'].update(self._request_header())
