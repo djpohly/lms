@@ -161,11 +161,26 @@ class Role(RestObject, rest_query='roles/{id}'):
     pass
 
 
+# TODO: don't assume the message is in "inbox"
+# TODO: this is actually MessageThread - add "messages" property and Message
+#       class, and move author/recipients there
 class Message(RestObject, rest_query='messages/inbox/{id}'):
     """Private messages that can be sent and shared"""
 
     def __str__(self):
         return self['subject']
+
+    @cached_property
+    def author(self):
+        return User.for_id(self._sc, self['author_id'])
+
+    @cached_property
+    def recipients(self):
+        return [User.for_id(self._sc, uid) for uid in self['recipient_ids'].split(',')]
+
+    @property
+    def is_read(self):
+        return self['message_status'] == 'read'
 
 
 class Collection(RestObject, rest_query='collections/{id}'):
