@@ -39,3 +39,9 @@ class Schoology:
     def collections(self):
         return [Collection(self, d) for d in
                 self.api._get_depaginate('collections', 'collection')]
+
+    def messages(self, folder=None):
+        if folder is None:
+            folder = 'inbox'
+        return [Message(self, d) for d in
+                self.api._get_depaginate('messages/' + folder, 'message')]
