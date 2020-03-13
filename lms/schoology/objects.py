@@ -165,7 +165,7 @@ class Message(RestObject, rest_query='messages/inbox/{id}'):
     """Private messages that can be sent and shared"""
 
     def __str__(self):
-        return self['id']
+        return self['subject']
 
 
 class Collection(RestObject, rest_query='collections/{id}'):
