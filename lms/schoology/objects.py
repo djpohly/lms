@@ -186,10 +186,6 @@ class Message(RestObject):
 
 class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
     """Private message thread that may be multiple messages long"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def __str__(self):
         return self.subject
 
