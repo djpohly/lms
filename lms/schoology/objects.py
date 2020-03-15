@@ -199,10 +199,8 @@ class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
 
     @property
     def participants(self):
-        s = {User.for_id(self._sc, self['author_id'])}
-        s.update(User.for_id(self._sc, uid) for uid in
-                 self['recipient_ids'].split(','))
-        return s
+        return {User.for_id(self._sc, uid) for uid in
+                (*self['recipient_ids'].split(','), self['author_id'])}
 
     @property
     def time(self):
