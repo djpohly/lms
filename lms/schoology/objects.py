@@ -1,10 +1,11 @@
 from enum import Enum
+from datetime import datetime
 import collections.abc
 import click_log
 from cached_property import cached_property
 
 __all__ = ['School', 'Building', 'User', 'Group', 'Course', 'Section',
-        'GradingPeriod', 'Role', 'Message', 'Collection', 'Enrollment',
+        'GradingPeriod', 'Role', 'MessageThread', 'Collection', 'Enrollment',
         'Assignment']
 
 log = click_log.basic_config('lms')
@@ -164,11 +165,10 @@ class Role(RestObject, rest_query='roles/{id}'):
 # TODO: don't assume the message is in "inbox"
 # TODO: this is actually MessageThread - add "messages" property and Message
 #       class, and move author/recipients there
-class Message(RestObject, rest_query='messages/inbox/{id}'):
-    """Private messages that can be sent and shared"""
-
+class Message(RestObject):
+    """Private message that can be sent and shared"""
     def __str__(self):
-        return self['subject']
+        return self.text
 
     @cached_property
     def author(self):
@@ -176,11 +176,46 @@ class Message(RestObject, rest_query='messages/inbox/{id}'):
 
     @cached_property
     def recipients(self):
-        return [User.for_id(self._sc, uid) for uid in self['recipient_ids'].split(',')]
+        return [User.for_id(self._sc, uid) for uid in
+                self['recipient_ids'].split(',')]
+
+    @cached_property
+    def text(self):
+        return self['message']
+
+
+class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
+    """Private message thread that may be multiple messages long"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return self.subject
+
+    @cached_property
+    def subject(self):
+        return self['subject']
+
+    @cached_property
+    def participants(self):
+        s = {User.for_id(self._sc, self['author_id'])}
+        s.update(User.for_id(self._sc, uid) for uid in
+                 self['recipient_ids'].split(','))
+        return s
+
+    @cached_property
+    def time(self):
+        return datetime.fromtimestamp(self['last_updated']).astimezone()
 
     @property
     def is_read(self):
         return self['message_status'] == 'read'
+
+    @property
+    def messages(self):
+        return [Message(self._sc, m) for m in
+                self._sc.api._get(f"messages/inbox/{self['id']}")['message']]
 
 
 class Collection(RestObject, rest_query='collections/{id}'):
