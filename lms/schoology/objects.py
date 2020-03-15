@@ -96,7 +96,7 @@ class User(RestObject, rest_query='users/{id}'):
         return [Section(self._sc, d) for d in
                 self._sc.api._get_depaginate(self.rest_path() + '/sections', 'section')]
 
-    @cached_property
+    @property
     def courses(self):
         return sorted({s.course for s in self.sections}, key=str)
 
@@ -136,7 +136,7 @@ class Section(RestObject, rest_query='sections/{id}'):
     def course(self):
         return Course.for_id(self._sc, self['course_id'])
 
-    @cached_property
+    @property
     def grading_periods(self):
         return [GradingPeriod.for_id(self._sc, gp) for gp in
                 self['grading_periods']]
@@ -170,11 +170,11 @@ class Message(RestObject):
     def __str__(self):
         return self.text
 
-    @cached_property
+    @property
     def author(self):
         return User.for_id(self._sc, self['author_id'])
 
-    @cached_property
+    @property
     def recipients(self):
         return [User.for_id(self._sc, uid) for uid in
                 self['recipient_ids'].split(',')]
@@ -197,14 +197,14 @@ class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
     def subject(self):
         return self['subject']
 
-    @cached_property
+    @property
     def participants(self):
         s = {User.for_id(self._sc, self['author_id'])}
         s.update(User.for_id(self._sc, uid) for uid in
                  self['recipient_ids'].split(','))
         return s
 
-    @cached_property
+    @property
     def time(self):
         return datetime.fromtimestamp(self['last_updated']).astimezone()
 
