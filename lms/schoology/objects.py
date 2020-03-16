@@ -11,19 +11,50 @@ __all__ = ['School', 'Building', 'User', 'Group', 'Course', 'Section',
 log = click_log.basic_config('lms')
 
 
-class RestObject(collections.abc.Hashable):
+class IdCached(type):
+    def __init__(cls, *args, **kwargs):
+        """Initialize class properties for caching"""
+        cls._cache = {}
+        super().__init__(*args, **kwargs)
+
+    def __call__(cls, id_or_data=None, *args, **kwargs):
+        if isinstance(id_or_data, dict):
+            id = id_or_data['id']
+        else:
+            id = id_or_data
+
+        try:
+            obj = cls._cache[id]
+        except KeyError:
+            obj = cls._cache[id] = super().__call__(id_or_data, *args, **kwargs)
+        return obj
+
+
+class CachingMixin:
     def __init_subclass__(cls, **kwargs):
         """Initialize class properties for caching"""
         cls._cache = {}
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, sc, json, realm=None):
+    def __new__(cls, *args, **kwargs):
+        print('mixin new')
+        return super().__new__(cls)
+
+    def __init__(self, *args, **kwargs):
+        print('mixin init')
+        log.debug(f"caching {self!r}")
+        type(self)._cache[self.id()] = self
+        super().__init__(*args, **kwargs)
+
+
+class RestObject(CachingMixin, collections.abc.Hashable):
+    def __init__(self, sc, json, realm=None, *args, **kwargs):
         """Initialize a new local object with the given properties"""
+        print('class init')
         self.realm = realm
         self._sc = sc
         self._json = json.copy()
-        log.debug(f"caching {self!r}")
-        type(self)._cache[self.id()] = self
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return f"{type(self).__name__}<{self.id()}>"
