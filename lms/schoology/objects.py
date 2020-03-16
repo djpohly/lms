@@ -53,7 +53,7 @@ class RestObject(collections.abc.Hashable):
 
     @classmethod
     def build_rest_path(cls, ident, realm=None):
-        base = '' if realm is None else realm.rest_path() + '/'
+        base = realm.rest_path() if realm is not None else ''
         return base + cls._rest_query.format(id=ident)
 
     def rest_path(self):
@@ -73,7 +73,7 @@ class RestObject(collections.abc.Hashable):
         return item
 
 
-class School(RestObject, rest_query='schools/{id}'):
+class School(RestObject, rest_query='/schools/{id}'):
     """Most basic grouping of courses, groups, and users"""
 
     @cached_property
@@ -83,12 +83,12 @@ class School(RestObject, rest_query='schools/{id}'):
 
 
 # Query is not a typo (see Schoology API reference)
-class Building(RestObject, rest_query='schools/{id}'):
+class Building(RestObject, rest_query='/schools/{id}'):
     """Further separation of courses, groups, and users (e.g. campuses)"""
     pass
 
 
-class User(RestObject, rest_query='users/{id}'):
+class User(RestObject, rest_query='/users/{id}'):
     """Account corresponding to a user"""
 
     def __str__(self):
@@ -109,7 +109,7 @@ class User(RestObject, rest_query='users/{id}'):
 
 
 # XXX resync() not yet tested
-class Group(RestObject, rest_query='groups/{id}'):
+class Group(RestObject, rest_query='/groups/{id}'):
     """Non-academic version of course section; holds members, events,
     documents, etc."""
 
@@ -119,13 +119,13 @@ class Group(RestObject, rest_query='groups/{id}'):
                 self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
 
-class Course(RestObject, rest_query='courses/{id}'):
+class Course(RestObject, rest_query='/courses/{id}'):
     """Container for course sections"""
     @property
     def building(self):
         return Building.for_id(self._sc, self['building_id'])
 
-class Section(RestObject, rest_query='sections/{id}'):
+class Section(RestObject, rest_query='/sections/{id}'):
     """Section of a parent course in which teachers and students are
     enrolled"""
 
@@ -160,12 +160,12 @@ class Section(RestObject, rest_query='sections/{id}'):
                 self._sc.api._get(self.rest_path() + '/grade_items')['assignment']]
 
 
-class GradingPeriod(RestObject, rest_query='gradingperiods/{id}'):
+class GradingPeriod(RestObject, rest_query='/gradingperiods/{id}'):
     """Period during which a course section is active"""
     pass
 
 
-class Role(RestObject, rest_query='roles/{id}'):
+class Role(RestObject, rest_query='/roles/{id}'):
     """Collection of user permissions"""
     pass
 
@@ -194,7 +194,7 @@ class Message(RestObject):
         return self['message']
 
 
-class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
+class MessageThread(RestObject, rest_query='/messages/inbox/{id}'):
     """Private message thread that may be multiple messages long"""
     def __str__(self):
         return self.subject
@@ -222,12 +222,12 @@ class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
                 self._sc.api._get(f"messages/inbox/{self.id()}")['message']]
 
 
-class Collection(RestObject, rest_query='collections/{id}'):
+class Collection(RestObject, rest_query='/collections/{id}'):
     """Collections and templates for user and group resources"""
     pass
 
 
-class Enrollment(RestObject, rest_query='enrollments/{id}'):
+class Enrollment(RestObject, rest_query='/enrollments/{id}'):
     """Association between a user and a course or group"""
 
     class Status(Enum):
@@ -250,7 +250,7 @@ class Enrollment(RestObject, rest_query='enrollments/{id}'):
         return bool(int(self['admin']))
 
 
-class Assignment(RestObject, rest_query='assignments/{id}'):
+class Assignment(RestObject, rest_query='/assignments/{id}'):
     """Container for coursework, test, or quiz"""
 
     @cached_property
@@ -263,7 +263,7 @@ class Assignment(RestObject, rest_query='assignments/{id}'):
 # TODO The real RestObject here is Grades, but it can be filtered on
 # assignment_id, enrollment_id, or both.
 # XXX Does not yet work with resync().  KeyError on assignment_id
-class Grade(RestObject, rest_query='grades/{id}'):
+class Grade(RestObject, rest_query='/grades/{id}'):
     """Points assigned to users for a specific assignment"""
 
     def id(self):

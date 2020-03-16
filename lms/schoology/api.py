@@ -22,7 +22,7 @@ class AuthorizationError(Exception):
 
 
 class SchoologyApi:
-    ROOT = 'https://api.schoology.com/v1/'
+    ROOT = 'https://api.schoology.com/v1'
     limit = 100
 
     def __init__(self, consumer_key, consumer_secret, domain='https://www.schoology.com', three_legged=False,
@@ -67,7 +67,7 @@ class SchoologyApi:
         if self.authorized:
             if not self.three_legged:
                 return None
-            r = self.oauth.get(url=SchoologyApi.ROOT + 'users/me', headers=self._request_header())
+            r = self.oauth.get(url=SchoologyApi.ROOT + '/users/me', headers=self._request_header())
             if r.status_code > 400:
                 self.access_token = None
                 self.access_token_secret = None
