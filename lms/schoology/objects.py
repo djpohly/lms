@@ -12,10 +12,9 @@ log = click_log.basic_config('lms')
 
 
 class RestObject(collections.abc.Hashable):
-    def __init_subclass__(cls, rest_query='', **kwargs):
+    def __init_subclass__(cls, **kwargs):
         """Initialize class properties for caching"""
         cls._cache = {}
-        cls._rest_query = rest_query
         super().__init_subclass__(**kwargs)
 
     def __init__(self, sc, json, realm=None):
@@ -54,7 +53,7 @@ class RestObject(collections.abc.Hashable):
     @classmethod
     def build_rest_path(cls, ident, realm=None):
         base = realm.rest_path() if realm is not None else ''
-        return base + cls._rest_query.format(id=ident)
+        return base + cls._REST_PATH.format(id=ident)
 
     def rest_path(self):
         return self.build_rest_path(self.id(), realm=self.realm)
@@ -73,8 +72,9 @@ class RestObject(collections.abc.Hashable):
         return item
 
 
-class School(RestObject, rest_query='/schools/{id}'):
+class School(RestObject):
     """Most basic grouping of courses, groups, and users"""
+    _REST_PATH = '/schools/{id}'
 
     @cached_property
     def buildings(self):
@@ -82,14 +82,15 @@ class School(RestObject, rest_query='/schools/{id}'):
                 self._sc.api._get(self.rest_path() + '/buildings')]
 
 
-# Query is not a typo (see Schoology API reference)
-class Building(RestObject, rest_query='/schools/{id}'):
+class Building(RestObject):
     """Further separation of courses, groups, and users (e.g. campuses)"""
-    pass
+    # Not a typo (see Schoology API reference)
+    _REST_PATH = '/schools/{id}'
 
 
-class User(RestObject, rest_query='/users/{id}'):
+class User(RestObject):
     """Account corresponding to a user"""
+    _REST_PATH = '/users/{id}'
 
     def __str__(self):
         return self['name_display']
@@ -109,9 +110,9 @@ class User(RestObject, rest_query='/users/{id}'):
 
 
 # XXX resync() not yet tested
-class Group(RestObject, rest_query='/groups/{id}'):
-    """Non-academic version of course section; holds members, events,
-    documents, etc."""
+class Group(RestObject):
+    """Non-academic version of course section; holds members, events, documents, etc."""
+    _REST_PATH = '/groups/{id}'
 
     @cached_property
     def enrollments(self):
@@ -119,15 +120,17 @@ class Group(RestObject, rest_query='/groups/{id}'):
                 self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
 
-class Course(RestObject, rest_query='/courses/{id}'):
+class Course(RestObject):
     """Container for course sections"""
+    _REST_PATH = '/courses/{id}'
+
     @property
     def building(self):
         return Building.for_id(self._sc, self['building_id'])
 
-class Section(RestObject, rest_query='/sections/{id}'):
-    """Section of a parent course in which teachers and students are
-    enrolled"""
+class Section(RestObject):
+    """Section of a parent course in which teachers and students are enrolled"""
+    _REST_PATH = '/sections/{id}'
 
     def __str__(self):
         return f"{self['course_title'].strip()} ({self.grading_periods[0]['title'].strip()})"
@@ -160,14 +163,14 @@ class Section(RestObject, rest_query='/sections/{id}'):
                 self._sc.api._get(self.rest_path() + '/grade_items')['assignment']]
 
 
-class GradingPeriod(RestObject, rest_query='/gradingperiods/{id}'):
+class GradingPeriod(RestObject):
     """Period during which a course section is active"""
-    pass
+    _REST_PATH = '/gradingperiods/{id}'
 
 
-class Role(RestObject, rest_query='/roles/{id}'):
+class Role(RestObject):
     """Collection of user permissions"""
-    pass
+    _REST_PATH = '/roles/{id}'
 
 
 # TODO: The real RestObjects here are MessageFolder ("messages/{folder}") and
@@ -194,8 +197,10 @@ class Message(RestObject):
         return self['message']
 
 
-class MessageThread(RestObject, rest_query='/messages/inbox/{id}'):
+class MessageThread(RestObject):
     """Private message thread that may be multiple messages long"""
+    _REST_PATH = '/messages/inbox/{id}'
+
     def __str__(self):
         return self.subject
 
@@ -222,13 +227,15 @@ class MessageThread(RestObject, rest_query='/messages/inbox/{id}'):
                 self._sc.api._get(f"messages/inbox/{self.id()}")['message']]
 
 
-class Collection(RestObject, rest_query='/collections/{id}'):
+class Collection(RestObject):
     """Collections and templates for user and group resources"""
+    _REST_PATH = '/collections/{id}'
     pass
 
 
-class Enrollment(RestObject, rest_query='/enrollments/{id}'):
+class Enrollment(RestObject):
     """Association between a user and a course or group"""
+    _REST_PATH = '/enrollments/{id}'
 
     class Status(Enum):
         ACTIVE = 1
@@ -250,8 +257,9 @@ class Enrollment(RestObject, rest_query='/enrollments/{id}'):
         return bool(int(self['admin']))
 
 
-class Assignment(RestObject, rest_query='/assignments/{id}'):
+class Assignment(RestObject):
     """Container for coursework, test, or quiz"""
+    _REST_PATH = '/assignments/{id}'
 
     @cached_property
     def grades(self):
@@ -263,8 +271,9 @@ class Assignment(RestObject, rest_query='/assignments/{id}'):
 # TODO The real RestObject here is Grades, but it can be filtered on
 # assignment_id, enrollment_id, or both.
 # XXX Does not yet work with resync().  KeyError on assignment_id
-class Grade(RestObject, rest_query='/grades/{id}'):
+class Grade(RestObject):
     """Points assigned to users for a specific assignment"""
+    _REST_PATH = '/grades/{id}'
 
     def id(self):
         return (int(self['assignment_id']), int(self['enrollment_id']))
