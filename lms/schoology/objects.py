@@ -44,13 +44,20 @@ class RestObject(collections.abc.Hashable):
             return NotImplemented
         return self.id() == other.id()
 
+    def resync(self):
+        """Re-synchronize data from Schoology"""
+        sc = self._sc
+        path = self.rest_path()
+        self.__dict__.clear()
+        self.__init__(sc, sc.api._get(path))
+
     @classmethod
     def build_rest_path(cls, ident, realm=None):
         base = '' if realm is None else realm.rest_path() + '/'
         return base + cls._rest_query.format(id=ident)
 
     def rest_path(self):
-        return self.build_rest_path(self['id'], realm=self.realm)
+        return self.build_rest_path(self.id(), realm=self.realm)
 
     def id(self):
         return int(self['id'])
@@ -101,6 +108,7 @@ class User(RestObject, rest_query='users/{id}'):
         return sorted({s.course for s in self.sections}, key=str)
 
 
+# XXX resync() not yet tested
 class Group(RestObject, rest_query='groups/{id}'):
     """Non-academic version of course section; holds members, events,
     documents, etc."""
@@ -162,9 +170,11 @@ class Role(RestObject, rest_query='roles/{id}'):
     pass
 
 
-# TODO: don't assume the message is in "inbox"
-# TODO: this is actually MessageThread - add "messages" property and Message
-#       class, and move author/recipients there
+# TODO: The real RestObjects here are MessageFolder ("messages/{folder}") and
+# MessageThread ("messages/inbox/{id}").  What we get in a MessageFolder is
+# analagous to the message headers, and the MessageThread contains the rest of
+# the information.
+# XXX The above needs to be addressed for these to work with resync()
 class Message(RestObject):
     """Private message that can be sent and shared"""
     def __str__(self):
@@ -209,7 +219,7 @@ class MessageThread(RestObject, rest_query='messages/inbox/{id}'):
     @property
     def messages(self):
         return [Message(self._sc, m) for m in
-                self._sc.api._get(f"messages/inbox/{self['id']}")['message']]
+                self._sc.api._get(f"messages/inbox/{self.id()}")['message']]
 
 
 class Collection(RestObject, rest_query='collections/{id}'):
@@ -247,9 +257,12 @@ class Assignment(RestObject, rest_query='assignments/{id}'):
     def grades(self):
         return [Grade(self._sc, g, realm=self.realm) for g in
                 self._sc.api._get(self.realm.rest_path() + '/grades',
-                    params={'assignment_id': self['id']})['grades']['grade']]
+                    params={'assignment_id': self.id()})['grades']['grade']]
 
 
+# TODO The real RestObject here is Grades, but it can be filtered on
+# assignment_id, enrollment_id, or both.
+# XXX Does not yet work with resync().  KeyError on assignment_id
 class Grade(RestObject, rest_query='grades/{id}'):
     """Points assigned to users for a specific assignment"""
 
