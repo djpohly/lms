@@ -4,23 +4,25 @@ import collections.abc
 import click_log
 from cached_property import cached_property
 
-__all__ = ['School', 'Building', 'User', 'Group', 'Course', 'Section',
-        'GradingPeriod', 'Role', 'MessageThread', 'Collection', 'Enrollment',
-        'Assignment']
+__all__ = ['RestObject', 'School', 'Building', 'User', 'Group', 'Course',
+           'Section', 'GradingPeriod', 'Role', 'MessageThread', 'Collection',
+           'Enrollment', 'Assignment']
 
 log = click_log.basic_config('lms')
 
 
 class RestObject(collections.abc.Hashable):
+    # Ugly and bad but it works for now
+    _sc = None
+
     def __init_subclass__(cls, **kwargs):
         """Initialize class properties for caching"""
         cls._cache = {}
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, sc, json, realm=None):
+    def __init__(self, json, realm=None):
         """Initialize a new local object with the given properties"""
         self.realm = realm
-        self._sc = sc
         self._json = json.copy()
         log.debug(f"caching {self!r}")
         type(self)._cache[self.id()] = self
@@ -62,13 +64,13 @@ class RestObject(collections.abc.Hashable):
         return int(self['id'])
 
     @classmethod
-    def for_id(cls, sc, ident, realm=None):
+    def for_id(cls, ident, realm=None):
         """Get an object by its "id" property"""
         ident = int(ident)
         try:
             item = cls._cache[ident]
         except KeyError:
-            item = cls(sc, sc.api._get(cls.build_rest_path(ident, realm)))
+            item = cls(cls._sc.api._get(cls.build_rest_path(ident, realm)))
         return item
 
 
@@ -78,7 +80,7 @@ class School(RestObject):
 
     @cached_property
     def buildings(self):
-        return [Building(self._sc, d) for d in
+        return [Building(d) for d in
                 self._sc.api._get(self.rest_path() + '/buildings')]
 
 
@@ -97,11 +99,11 @@ class User(RestObject):
 
     @property
     def role(self):
-        return Role.for_id(self._sc, self['role_id'])
+        return Role.for_id(self['role_id'])
 
     @cached_property
     def sections(self):
-        return [Section(self._sc, d) for d in
+        return [Section(d) for d in
                 self._sc.api._get_depaginate(self.rest_path() + '/sections', 'section')]
 
     @property
@@ -116,7 +118,7 @@ class Group(RestObject):
 
     @cached_property
     def enrollments(self):
-        return [Enrollment(self._sc, d, realm=self) for d in
+        return [Enrollment(d, realm=self) for d in
                 self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
 
@@ -126,7 +128,7 @@ class Course(RestObject):
 
     @property
     def building(self):
-        return Building.for_id(self._sc, self['building_id'])
+        return Building.for_id(self['building_id'])
 
 class Section(RestObject):
     """Section of a parent course in which teachers and students are enrolled"""
@@ -137,29 +139,29 @@ class Section(RestObject):
 
     @property
     def school(self):
-        return School.for_id(self._sc, self['school_id'])
+        return School.for_id(self['school_id'])
 
     @property
     def building(self):
-        return Building.for_id(self._sc, self['building_id'])
+        return Building.for_id(self['building_id'])
 
     @property
     def course(self):
-        return Course.for_id(self._sc, self['course_id'])
+        return Course.for_id(self['course_id'])
 
     @property
     def grading_periods(self):
-        return [GradingPeriod.for_id(self._sc, gp) for gp in
+        return [GradingPeriod.for_id(gp) for gp in
                 self['grading_periods']]
 
     @cached_property
     def enrollments(self):
-        return [Enrollment(self._sc, d, realm=self) for d in
+        return [Enrollment(d, realm=self) for d in
                 self._sc.api._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
     @cached_property
     def assignments(self):
-        return [Assignment(self._sc, gi, realm=self) for gi in
+        return [Assignment(gi, realm=self) for gi in
                 self._sc.api._get(self.rest_path() + '/grade_items')['assignment']]
 
 
@@ -185,11 +187,11 @@ class Message(RestObject):
 
     @property
     def author(self):
-        return User.for_id(self._sc, self['author_id'])
+        return User.for_id(self['author_id'])
 
     @property
     def recipients(self):
-        return [User.for_id(self._sc, uid) for uid in
+        return [User.for_id(uid) for uid in
                 self['recipient_ids'].split(',')]
 
     @cached_property
@@ -210,7 +212,7 @@ class MessageThread(RestObject):
 
     @property
     def participants(self):
-        return {User.for_id(self._sc, uid) for uid in
+        return {User.for_id(uid) for uid in
                 (*self['recipient_ids'].split(','), self['author_id'])}
 
     @property
@@ -223,7 +225,7 @@ class MessageThread(RestObject):
 
     @property
     def messages(self):
-        return [Message(self._sc, m) for m in
+        return [Message(m) for m in
                 self._sc.api._get(f"messages/inbox/{self.id()}")['message']]
 
 
@@ -246,7 +248,7 @@ class Enrollment(RestObject):
 
     @property
     def user(self):
-        return User.for_id(self._sc, self['uid'])
+        return User.for_id(self['uid'])
 
     @property
     def status(self):
@@ -263,7 +265,7 @@ class Assignment(RestObject):
 
     @cached_property
     def grades(self):
-        return [Grade(self._sc, g, realm=self.realm) for g in
+        return [Grade(g, realm=self.realm) for g in
                 self._sc.api._get(self.realm.rest_path() + '/grades',
                     params={'assignment_id': self.id()})['grades']['grade']]
 
@@ -280,9 +282,9 @@ class Grade(RestObject):
 
     @property
     def user(self):
-        return Enrollment.for_id(self._sc, self['enrollment_id'],
+        return Enrollment.for_id(self['enrollment_id'],
                 realm=self.realm).user
 
     @property
     def assignment(self):
-        return Assignment.for_id(self._sc, self['assignment_id'])
+        return Assignment.for_id(self['assignment_id'])
