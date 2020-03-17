@@ -133,11 +133,8 @@ class SchoologyApi:
         kwargs.setdefault('headers', {})
         kwargs['headers'].update(self._request_header())
         kwargs['auth'] = self.oauth.auth
-        try:
-            response = self.oauth.get(url='%s%s' % (SchoologyApi.ROOT, path), **kwargs)
-            return response.json()
-        except JSONDecodeError:
-            return {}
+        response = self.oauth.get(url='%s%s' % (SchoologyApi.ROOT, path), **kwargs)
+        return response.json()
 
     def _get_depaginate(self, path, field, per_page=None, **kwargs):
         """
@@ -175,10 +172,8 @@ class SchoologyApi:
         :param data: JSON data to POST.
         :return: JSON response.
         """
-        try:
-            return self.oauth.post(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth).json()
-        except JSONDecodeError:
-            return {}
+        response = self.oauth.post(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth)
+        return response.json()
 
     def _put(self, path, data):
         """
@@ -188,10 +183,8 @@ class SchoologyApi:
         :param data: JSON data to PUT.
         :return: JSON response.
         """
-        try:
-            return self.oauth.put(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth).json()
-        except JSONDecodeError:
-            return {}
+        response = self.oauth.put(url='%s%s?limit=%s' % (SchoologyApi.ROOT, path, self.limit), json=data, headers=self._request_header(), auth=self.oauth.auth)
+        return response.json()
 
     def _delete(self, path):
         """
@@ -199,6 +192,6 @@ class SchoologyApi:
 
         :param path: Path (following API root) to endpoint.
         """
-        return self.oauth.delete(url='%s%s' % (SchoologyApi.ROOT, path), headers=self._request_header(), auth=self.oauth.auth)
+        self.oauth.delete(url='%s%s' % (SchoologyApi.ROOT, path), headers=self._request_header(), auth=self.oauth.auth)
 
     # TODO: Implement multi-get(!) and multi-options requests. Don't seem to work right now.
