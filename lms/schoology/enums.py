@@ -2,6 +2,12 @@ from enum import Enum, auto
 from .util import DictableFlag
 
 
+class DefaultCollections(Enum):
+    NONE = 0
+    HOME = 1
+    DOWNLOADS = 2
+
+
 class EnrollmentStatus(Enum):
     ACTIVE = 1
     EXPIRED = 2

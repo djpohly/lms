@@ -263,3 +263,22 @@ class Enrollment(RestObject):
                    'enrollment_source': int}
 
     user = LazyProperty('uid', int, User)
+
+
+class Collection(RestObject):
+    _REALM_TYPE = 'collection'
+    _PROPERTIES = {'id': int,
+                   'title': str,
+                   'shared_users': int,
+                   'is_default': DefaultCollections,
+                   'realm_id': int,
+                   'realm_link': str}
+
+    user = LazyProperty('uid', int, User)
+    realm_type = LazyProperty('realm', str)
+
+    @property
+    def realm(self):
+        if self.realm_id is None:
+            return None
+        return REALMS[self.realm_type](self.realm_id)
