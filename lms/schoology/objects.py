@@ -21,7 +21,7 @@ class RestObject:
     API = None
 
     # Defaults
-    _REST_PATH = '/{_REALM_TYPE}/{id}'
+    _REST_PATH = '/{_REALM_TYPE}s/{id}'
     _PROPERTIES = {}
 
     @classmethod
@@ -40,8 +40,8 @@ class RestObject:
         if id is not None:
             data['id'] = id
         if realm is not None:
-            data['realm_type'] = realm._REALM_TYPE
-            data['realm_id'] = realm.id
+            self.realm_type = realm._REALM_TYPE
+            self.realm_id = realm.id
         self._data = data
 
     def __getitem__(self, name):
@@ -58,7 +58,7 @@ class RestObject:
 
 
 class School(RestObject):
-    _REALM_TYPE = 'schools'
+    _REALM_TYPE = 'school'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'address1': str,
@@ -75,7 +75,7 @@ class School(RestObject):
 
 class Building(RestObject):
     # Not a typo
-    _REALM_TYPE = 'schools'
+    _REALM_TYPE = 'school'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'address1': str,
@@ -92,7 +92,7 @@ class Building(RestObject):
 
 
 class Role(RestObject):
-    _REALM_TYPE = 'roles'
+    _REALM_TYPE = 'role'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'faculty': bool,
@@ -100,7 +100,7 @@ class Role(RestObject):
 
 
 class Group(RestObject):
-    _REALM_TYPE = 'groups'
+    _REALM_TYPE = 'group'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'description': str,
@@ -119,7 +119,7 @@ class Group(RestObject):
 
 # TODO: investigate requesting with ?extended=TRUE
 class User(RestObject):
-    _REALM_TYPE = 'users'
+    _REALM_TYPE = 'user'
     _PROPERTIES = {'id': int,
                    'synced': bool,
                    'school_uid': str,
@@ -158,7 +158,7 @@ class User(RestObject):
 
 
 class GradingPeriod(RestObject):
-    _REALM_TYPE = 'gradingperiods'
+    _REALM_TYPE = 'gradingperiod'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'start': parsedate,
@@ -170,7 +170,7 @@ class GradingPeriod(RestObject):
 
 
 class Course(RestObject):
-    _REALM_TYPE = 'courses'
+    _REALM_TYPE = 'course'
     _PROPERTIES = {'id': int,
                    'title': str,
                    'course_code': str,
@@ -186,7 +186,7 @@ class Course(RestObject):
 
 
 class Section(RestObject):
-    _REALM_TYPE = 'sections'
+    _REALM_TYPE = 'section'
     _PROPERTIES = {'id': int,
                    'course_title': str,
                    'course_code': str,
@@ -238,7 +238,7 @@ class Section(RestObject):
 
 
 class Enrollment(RestObject):
-    _REST_PATH = '/{realm_type}/{realm_id}/enrollments/{id}'
+    _REST_PATH = '/{realm_type}s/{realm_id}/enrollments/{id}'
     _PROPERTIES = {'id': int,
                    'school_uid': str,
                    'name_title': str,
@@ -254,9 +254,6 @@ class Enrollment(RestObject):
                    'status': lambda x: EnrollmentStatus(int(x)),
                    'picture_url': str,
                    # Undocumented, only when realm='section'
-                   'enrollment_source': int,
-                   # Internal
-                   'realm_type': str,
-                   'realm_id': int}
+                   'enrollment_source': int}
 
     user = LazyProperty('uid', int, User)
