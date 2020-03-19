@@ -24,7 +24,7 @@ class Schoology:
 
     @cached_property
     def me(self):
-        return User(data=self.api._get('/users/me'))
+        return User(self.api._get('/users/me'))
 
     @cached_property
     def languages(self):
@@ -33,16 +33,16 @@ class Schoology:
 
     @cached_property
     def schools(self):
-        return [School(data=d) for d in
+        return [School(d) for d in
                 self.api._get('/schools')['school']]
 
     @cached_property
     def collections(self):
-        return [Collection(data=d) for d in
+        return [Collection(d) for d in
                 self.api._get_depaginate('/collections', 'collection')]
 
     def messages(self, folder=None):
         if folder is None:
             folder = 'inbox'
-        return [MessageThread(folder=folder, data=d) for d in
+        return [MessageThread(d, folder=folder) for d in
                 self.api._get_depaginate('/messages/' + folder, 'message')]

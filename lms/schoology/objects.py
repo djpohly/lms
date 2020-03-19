@@ -41,16 +41,15 @@ class RestObject:
         for name, ctor in cls._PROPERTIES.items():
             setattr(cls, name, LazyProperty(name, ctor))
 
-    def __init__(self, id=None, *args, realm=None, data=None, **kwargs):
+    def __init__(self, id_or_data, *args, realm=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if data is None:
-            data = {}
-        if id is not None:
-            data['id'] = id
         if realm is not None:
             self.realm_type = realm._REALM_TYPE
             self.realm_id = realm.id
-        self._data = data
+        if isinstance(id_or_data, dict):
+            self._data = id_or_data.copy()
+        else:
+            self._data = dict(id=id_or_data)
 
     def __getitem__(self, name):
         return getattr(self, name)
@@ -88,7 +87,7 @@ class School(RestObject):
 
     @property
     def buildings(self):
-        return [Building(data=d) for d in
+        return [Building(d) for d in
                 self.API._get(self.rest_path() + '/buildings')]
 
 
@@ -144,7 +143,7 @@ class Group(RestObject):
 
     @property
     def enrollments(self):
-        return [Enrollment(data=d, realm=self) for d in
+        return [Enrollment(d, realm=self) for d in
                 self.API._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
 
@@ -191,12 +190,12 @@ class User(RestObject):
 
     @property
     def groups(self):
-        return [Group(data=d) for d in
+        return [Group(d) for d in
                 self.API._get_depaginate(self.rest_path() + '/groups', 'group')]
 
     @property
     def sections(self):
-        return [Section(data=d) for d in
+        return [Section(d) for d in
                 self.API._get_depaginate(self.rest_path() + '/sections', 'section')]
 
 
@@ -284,12 +283,12 @@ class Section(RestObject):
 
     @property
     def enrollments(self):
-        return [Enrollment(data=d, realm=self) for d in
+        return [Enrollment(d, realm=self) for d in
                 self.API._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
 
     @property
     def assignments(self):
-        return [Assignment(data=d, realm=self) for d in
+        return [Assignment(d, realm=self) for d in
                 self.API._get(self.rest_path() + '/grade_items')['assignment']]
 
 
@@ -390,7 +389,7 @@ class MessageThread(RestObject):
     _REST_PATH = '/messages/{folder}/{id}'
 
     id = LazyProperty('id', int)
-    messages = LazyProperty('message', lambda arr: [Message(data=d) for d in arr])
+    messages = LazyProperty('message', lambda arr: [Message(d) for d in arr])
 
     def __init__(self, *args, folder=None, **kwargs):
         super().__init__(*args, **kwargs)
