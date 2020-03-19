@@ -1,31 +1,6 @@
+from .util import parsedate, parsetime, csv_to_list
+from .enums import *
 from datetime import datetime
-from enum import Enum, Flag, auto
-
-
-def parsetime(s):
-    if not s:
-        return None
-    return datetime.strptime(s, '%H:%M').time()
-
-def parsedate(s):
-    if not s:
-        return None
-    return datetime.strptime(s, '%Y-%m-%d').date()
-
-
-def csv_to_list(*fns):
-    def _process(csv):
-        values = []
-        for value in filter(bool, csv.split(',')):
-            for fn in fns:
-                # Allow callable to be specified as string so we can use a
-                # class in its own static definition.
-                if isinstance(fn, str):
-                    fn = globals()[fn]
-                value = fn(value)
-            values.append(value)
-        return values
-    return _process
 
 
 def LazyProperty(name, *fns):
@@ -40,72 +15,6 @@ def LazyProperty(name, *fns):
                 value = fn(value)
         return value
     return property(_get)
-
-
-class EnrollmentStatus(Enum):
-    ACTIVE = 1
-    EXPIRED = 2
-    INVITED = 3
-    REQUESTED = 4
-    ARCHIVED = 5
-
-
-class RoleType(Enum):
-    ORGANIZATION = 1
-    BUILDING = 2
-
-
-class PrivacyLevel(Enum):
-    everyone = auto()
-    school = auto()
-    building = auto()
-    group = auto()
-    custom = auto()
-
-
-class Gender(Enum):
-    M = auto()
-    F = auto()
-
-
-class SubjectArea(Enum):
-    OTHER = 0
-    HEALTH_AND_PHYSICAL_EDUCATION = 1
-    LANGUAGE = 2
-    MATHEMATICS = 3
-    PROFESSIONAL_DEVELOPMENT = 4
-    SCIENCE = 5
-    SOCIAL_STUDIES = 6
-    SPECIAL_EDUCATION = 7
-    TECHNOLOGY = 8
-    ARTS = 9
-
-
-class DictableFlag(Flag):
-    @classmethod
-    def from_dict(cls, d):
-        total = 0
-        for k, v in d.items():
-            if v:
-                total |= getattr(cls, k).value
-        return cls(total)
-
-    def to_dict(self):
-        return {opt.name: int(opt in self) for opt in type(self)}
-
-
-class GroupOptions(DictableFlag):
-    member_post = auto()
-    member_post_comment = auto()
-    create_discussion = auto()
-    create_files = auto()
-    invite_type = auto()
-
-
-class UserPermissions(DictableFlag):
-    # Others?
-    is_directory_public = auto()
-    allow_connections = auto()
 
 
 class RestObject:
