@@ -54,8 +54,14 @@ class RestObject:
     def __getitem__(self, name):
         return getattr(self, name)
 
+    def __repr__(self):
+        return type(self).__name__ + '<' + repr(self.get_id()) + '>'
+
     def __str__(self):
-        return str(self['title'])
+        return str(self.title)
+
+    def get_id(self):
+        return self.id
 
     def rest_path(self):
         if not self._REST_PATH:
@@ -371,6 +377,9 @@ class Assignment(RestObject):
     # TODO: needs access to "self"
     # folder = LazyProperty('folder_id', lambda fid: Folder(fid, realm=self.realm))
 
+    def get_id(self):
+        return (self.realm_type, self.realm_id, self.id)
+
 
 class Message(RestObject):
     # Messages are immutable and are included entirely with the thread, so
@@ -385,6 +394,9 @@ class Message(RestObject):
     recipients = LazyProperty('recipient_ids', csv_to_list(int, User))
     author = LazyProperty('author_id', User)
     unread = LazyProperty('message_status', lambda s: s != 'read')
+
+    def get_id(self):
+        return None
 
 
 class MessageThread(RestObject):
