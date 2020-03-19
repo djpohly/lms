@@ -1,11 +1,8 @@
 from .schoology import Schoology
 import click
-import click_log
 from click_repl import repl
 import configparser
 import xdg
-
-log = click_log.basic_config('lms')
 
 BACKENDS = {
         'schoology': Schoology,
@@ -20,7 +17,6 @@ cur_course = None
 
 
 @click.group(invoke_without_command=True)
-@click_log.simple_verbosity_option(log)
 @click.pass_context
 def main(ctx):
     if ctx.invoked_subcommand is None:

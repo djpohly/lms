@@ -1,9 +1,6 @@
 from .api import SchoologyApi
 from .objects import *
-import click_log
 from cached_property import cached_property
-
-log = click_log.basic_config('lms')
 
 
 class Schoology:
