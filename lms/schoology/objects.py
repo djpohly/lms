@@ -373,13 +373,15 @@ class Assignment(RestObject):
 
 
 class Message(RestObject):
+    # Messages are immutable and are included entirely with the thread, so
+    # there is no need for updates
     _REST_PATH = None
-    _PROPERTIES = {'id': int,
-                   'subject': str,
+    _PROPERTIES = {'subject': str,
                    'last_updated': datetime.fromtimestamp,
                    'mid': int,  # Undocumented
                    'message': str}
 
+    thread_id = LazyProperty('id', int)
     recipients = LazyProperty('recipient_ids', csv_to_list(int, User))
     author = LazyProperty('author_id', User)
     unread = LazyProperty('message_status', lambda s: s != 'read')
