@@ -42,87 +42,17 @@ def LazyProperty(name, *fns):
     return property(_get)
 
 
-class RestObject:
-    API = None
-    _REST_PATH = ''
-    _PROPERTIES = {}
-
-    @classmethod
-    def set_api(cls, api):
-        cls.API = api
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        for name, ctor in cls._PROPERTIES.items():
-            setattr(cls, name, LazyProperty(name, ctor))
-
-    def __init__(self, id=None, *args, data=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        if data is None:
-            data = {}
-        if id is not None:
-            data['id'] = id
-        self._data = data
-
-    def __getitem__(self, name):
-        return getattr(self, name)
-
-    def __str__(self):
-        return str(self['title'])
-
-    def reload(self):
-        path = self._REST_PATH.format_map(self)
-        self._data.update(self.API._get(path))
-
-
-class School(RestObject):
-    _REST_PATH = '/schools/{school_id}'
-    _PROPERTIES = {'title': str,
-                   'address1': str,
-                   'address2': str,
-                   'city': str,
-                   'state': str,
-                   'postal_code': str,
-                   'country': str,
-                   'website': str,
-                   'phone': str,
-                   'fax': str,
-                   'picture_url': str}
-
-    school_id = LazyProperty('id', int)
-
-
-class Building(RestObject):
-    # Not a typo
-    _REST_PATH = '/schools/{building_id}'
-    _PROPERTIES = {'title': str,
-                   'address1': str,
-                   'address2': str,
-                   'city': str,
-                   'state': str,
-                   'postal_code': str,
-                   'country': str,
-                   'website': str,
-                   'phone': str,
-                   'fax': str,
-                   'building_code': str,
-                   'picture_url': str}
-
-    building_id = LazyProperty('id', int)
+class EnrollmentStatus(Enum):
+    ACTIVE = 1
+    EXPIRED = 2
+    INVITED = 3
+    REQUESTED = 4
+    ARCHIVED = 5
 
 
 class RoleType(Enum):
     ORGANIZATION = 1
     BUILDING = 2
-
-
-class Role(RestObject):
-    _REST_PATH = '/roles/{role_id}'
-    _PROPERTIES = {'title': str,
-                   'faculty': bool,
-                   'role_type': RoleType}
-
-    role_id = LazyProperty('id', int)
 
 
 class PrivacyLevel(Enum):
@@ -131,6 +61,24 @@ class PrivacyLevel(Enum):
     building = auto()
     group = auto()
     custom = auto()
+
+
+class Gender(Enum):
+    M = auto()
+    F = auto()
+
+
+class SubjectArea(Enum):
+    OTHER = 0
+    HEALTH_AND_PHYSICAL_EDUCATION = 1
+    LANGUAGE = 2
+    MATHEMATICS = 3
+    PROFESSIONAL_DEVELOPMENT = 4
+    SCIENCE = 5
+    SOCIAL_STUDIES = 6
+    SPECIAL_EDUCATION = 7
+    TECHNOLOGY = 8
+    ARTS = 9
 
 
 class DictableFlag(Flag):
@@ -154,9 +102,98 @@ class GroupOptions(DictableFlag):
     invite_type = auto()
 
 
+class UserPermissions(DictableFlag):
+    # Others?
+    is_directory_public = auto()
+    allow_connections = auto()
+
+
+class RestObject:
+    API = None
+
+    # Defaults
+    _REST_PATH = '/{_REALM_TYPE}/{id}'
+    _PROPERTIES = {}
+
+    @classmethod
+    def set_api(cls, api):
+        cls.API = api
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        for name, ctor in cls._PROPERTIES.items():
+            setattr(cls, name, LazyProperty(name, ctor))
+
+    def __init__(self, id=None, *args, realm=None, data=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if data is None:
+            data = {}
+        if id is not None:
+            data['id'] = id
+        if realm is not None:
+            data['realm_type'] = realm._REALM_TYPE
+            data['realm_id'] = realm.id
+        self._data = data
+
+    def __getitem__(self, name):
+        return getattr(self, name)
+
+    def __str__(self):
+        return str(self['title'])
+
+    def rest_path(self):
+        return self._REST_PATH.format_map(self)
+
+    def reload(self):
+        self._data.update(self.API._get(self.rest_path()))
+
+
+class School(RestObject):
+    _REALM_TYPE = 'schools'
+    _PROPERTIES = {'id': int,
+                   'title': str,
+                   'address1': str,
+                   'address2': str,
+                   'city': str,
+                   'state': str,
+                   'postal_code': str,
+                   'country': str,
+                   'website': str,
+                   'phone': str,
+                   'fax': str,
+                   'picture_url': str}
+
+
+class Building(RestObject):
+    # Not a typo
+    _REALM_TYPE = 'schools'
+    _PROPERTIES = {'id': int,
+                   'title': str,
+                   'address1': str,
+                   'address2': str,
+                   'city': str,
+                   'state': str,
+                   'postal_code': str,
+                   'country': str,
+                   'website': str,
+                   'phone': str,
+                   'fax': str,
+                   'building_code': str,
+                   'picture_url': str}
+
+
+class Role(RestObject):
+    _REALM_TYPE = 'roles'
+    _PROPERTIES = {'id': int,
+                   'title': str,
+                   'faculty': bool,
+                   'role_type': RoleType}
+
+
 class Group(RestObject):
-    _REST_PATH = '/groups/{group_id}'
-    _PROPERTIES = {'title': str,
+    _REALM_TYPE = 'groups'
+    _PROPERTIES = {'id': int,
+                   'title': str,
                    'description': str,
                    'website': str,
                    'access_code': str,
@@ -167,26 +204,15 @@ class Group(RestObject):
                    'picture_url': str,
                    'admin': bool}
 
-    group_id = LazyProperty('id', int)
     school = LazyProperty('school_id', int, School)
     building = LazyProperty('building_id', int, Building)
 
 
-class Gender(Enum):
-    M = auto()
-    F = auto()
-
-
-class UserPermissions(DictableFlag):
-    # Others?
-    is_directory_public = auto()
-    allow_connections = auto()
-
-
 # TODO: investigate requesting with ?extended=TRUE
 class User(RestObject):
-    _REST_PATH = '/users/{user_id}'
-    _PROPERTIES = {'synced': bool,
+    _REALM_TYPE = 'users'
+    _PROPERTIES = {'id': int,
+                   'synced': bool,
                    'school_uid': str,
                    'additional_buildings': csv_to_list(Building),
                    'name_title': str,
@@ -211,7 +237,6 @@ class User(RestObject):
                    'language': str,  # Undocumented
                    'permissions': UserPermissions.from_dict}
 
-    user_id = LazyProperty('id', int)
     school = LazyProperty('school_id', int, School)
     building = LazyProperty('building_id', int, Building)
     role = LazyProperty('role_id', int, Role)
@@ -224,8 +249,9 @@ class User(RestObject):
 
 
 class GradingPeriod(RestObject):
-    _REST_PATH = '/gradingperiods/{gradingperiod_id}'
-    _PROPERTIES = {'title': str,
+    _REALM_TYPE = 'gradingperiods'
+    _PROPERTIES = {'id': int,
+                   'title': str,
                    'start': parsedate,
                    'end': parsedate,
                    'active': bool,
@@ -233,25 +259,11 @@ class GradingPeriod(RestObject):
                    'has_children': bool,
                    'parent': int}
 
-    gradingperiod_id = LazyProperty('id', int)
-
-
-class SubjectArea(Enum):
-    OTHER = 0
-    HEALTH_AND_PHYSICAL_EDUCATION = 1
-    LANGUAGE = 2
-    MATHEMATICS = 3
-    PROFESSIONAL_DEVELOPMENT = 4
-    SCIENCE = 5
-    SOCIAL_STUDIES = 6
-    SPECIAL_EDUCATION = 7
-    TECHNOLOGY = 8
-    ARTS = 9
-
 
 class Course(RestObject):
-    _REST_PATH = '/courses/{course_id}'
-    _PROPERTIES = {'title': str,
+    _REALM_TYPE = 'courses'
+    _PROPERTIES = {'id': int,
+                   'title': str,
                    'course_code': str,
                    'department': str,
                    'description': str,
@@ -261,13 +273,13 @@ class Course(RestObject):
                    'grade_level_range_end': int,
                    'synced': bool}
 
-    course_id = LazyProperty('id', int)
     building = LazyProperty('building_id', int, Building)
 
 
 class Section(RestObject):
-    _REST_PATH = '/sections/{section_id}'
-    _PROPERTIES = {'course_title': str,
+    _REALM_TYPE = 'sections'
+    _PROPERTIES = {'id': int,
+                   'course_title': str,
                    'course_code': str,
                    'access_code': str,
                    # Replaced with 'title'
@@ -310,24 +322,16 @@ class Section(RestObject):
                    #             'allow_custom_overall_grade_text': 0},
                    'admin': bool}
 
-    section_id = LazyProperty('id', int)
     course = LazyProperty('course_id', int, Course)
     school = LazyProperty('school_id', int, School)
     building = LazyProperty('building_id', int, Building)
     title = LazyProperty('section_title', str)
 
 
-class EnrollmentStatus(Enum):
-    ACTIVE = 1
-    EXPIRED = 2
-    INVITED = 3
-    REQUESTED = 4
-    ARCHIVED = 5
-
-
 class Enrollment(RestObject):
-    _REST_PATH = '/{realm}s/{realm_id}/enrollments/{enrollment_id}'
-    _PROPERTIES = {'school_uid': str,
+    _REST_PATH = '/{realm_type}/{realm_id}/enrollments/{id}'
+    _PROPERTIES = {'id': int,
+                   'school_uid': str,
                    'name_title': str,
                    'name_title_show': lambda x: bool(int(x)),
                    'name_first': str,
@@ -340,10 +344,10 @@ class Enrollment(RestObject):
                    'admin': bool,
                    'status': lambda x: EnrollmentStatus(int(x)),
                    'picture_url': str,
-                   'realm': str,
-                   'realm_id': int,
                    # Undocumented, only when realm='section'
-                   'enrollment_source': int}
+                   'enrollment_source': int,
+                   # Internal
+                   'realm_type': str,
+                   'realm_id': int}
 
-    enrollment_id = LazyProperty('id', int)
     user = LazyProperty('uid', int, User)
