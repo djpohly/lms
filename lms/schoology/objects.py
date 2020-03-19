@@ -59,10 +59,14 @@ class RestObject:
         return str(self['title'])
 
     def rest_path(self):
+        if not self._REST_PATH:
+            return None
         return self._REST_PATH.format_map(self)
 
     def reload(self):
-        self._data.update(self.API._get(self.rest_path()))
+        path = self.rest_path()
+        if path:
+            self._data.update(self.API._get(path))
 
 
 class School(RestObject):
@@ -367,3 +371,30 @@ class Assignment(RestObject):
 
     # TODO: needs access to "self"
     # folder = LazyProperty('folder_id', lambda fid: Folder(fid, realm=self.realm))
+
+
+class Message(RestObject):
+    _REST_PATH = None
+    _PROPERTIES = {'id': int,
+                   'subject': str,
+                   'last_updated': datetime.fromtimestamp,
+                   'mid': int,  # Undocumented
+                   'message': str}
+
+    recipients = LazyProperty('recipient_ids', csv_to_list(int, User))
+    author = LazyProperty('author_id', User)
+    unread = LazyProperty('message_status', lambda s: s != 'read')
+
+
+class MessageThread(RestObject):
+    _REST_PATH = '/messages/{folder}/{id}'
+
+    id = LazyProperty('id', int)
+    messages = LazyProperty('message', lambda arr: [Message(data=d) for d in arr])
+
+    def __init__(self, *args, folder=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.folder = folder
+        # XXX this is a hack, since the original contains {'message': None} and
+        # prevents a reload because the key is present
+        del self._data['message']

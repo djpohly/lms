@@ -44,5 +44,5 @@ class Schoology:
     def messages(self, folder=None):
         if folder is None:
             folder = 'inbox'
-        return [MessageThread(data=d) for d in
+        return [MessageThread(folder=folder, data=d) for d in
                 self.api._get_depaginate('/messages/' + folder, 'message')]
