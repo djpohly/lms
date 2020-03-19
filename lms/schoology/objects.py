@@ -3,6 +3,10 @@ from .enums import *
 from datetime import datetime
 
 
+# RestObject classes which set _REALM_TYPE will self-register here
+REALMS = {}
+
+
 def LazyProperty(name, *fns):
     def _get(self):
         # XXX If the property isn't there, this will attempt reload every time
@@ -30,6 +34,8 @@ class RestObject:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
+        if hasattr(cls, '_REALM_TYPE'):
+            REALMS[cls._REALM_TYPE] = cls
         for name, ctor in cls._PROPERTIES.items():
             setattr(cls, name, LazyProperty(name, ctor))
 
