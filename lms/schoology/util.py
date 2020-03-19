@@ -1,7 +1,5 @@
 from enum import Flag
 
-__all__ = ['DictableFlag', 'parsetime', 'parsedate', 'csv_to_list']
-
 class DictableFlag(Flag):
     @classmethod
     def from_dict(cls, d):
@@ -24,6 +22,10 @@ def parsedate(s):
         return None
     return datetime.strptime(s, '%Y-%m-%d').date()
 
+def parsedatetime(s):
+    if not s:
+        return None
+    return datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
 
 def csv_to_list(*fns):
     def _process(csv):

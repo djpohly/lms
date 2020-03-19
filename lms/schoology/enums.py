@@ -21,6 +21,19 @@ class Gender(Enum):
     F = auto()
 
 
+class GradeItemType(Enum):
+    assignment = auto()
+    assessment = auto()
+    discussion = auto()
+    grade_column = auto()
+
+
+class GradingScaleType(Enum):
+    NUMERIC = 0
+    PERCENT = 1
+    POINT = 3
+
+
 class GroupOptions(DictableFlag):
     member_post = auto()
     member_post_comment = auto()

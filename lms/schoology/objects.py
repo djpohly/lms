@@ -1,4 +1,4 @@
-from .util import parsedate, parsetime, csv_to_list
+from .util import *
 from .enums import *
 from datetime import datetime
 
@@ -15,6 +15,7 @@ def LazyProperty(name, *fns):
             self.reload()
         value = self._data.get(name)
         if value is not None:
+            # TODO: pass "self" somewhere in here for access to e.g. realm?
             for fn in fns:
                 value = fn(value)
         return value
@@ -65,6 +66,8 @@ class RestObject:
 
 
 class School(RestObject):
+    """Most basic grouping of courses, groups, and users"""
+
     _REALM_TYPE = 'school'
     _PROPERTIES = {'id': int,
                    'title': str,
@@ -79,8 +82,15 @@ class School(RestObject):
                    'fax': str,
                    'picture_url': str}
 
+    @property
+    def buildings(self):
+        return [Building(data=d) for d in
+                self.API._get(self.rest_path() + '/buildings')]
+
 
 class Building(RestObject):
+    """Further separation of courses, groups, and users (e.g. campuses)"""
+
     # Not a typo
     _REALM_TYPE = 'school'
     _PROPERTIES = {'id': int,
@@ -107,6 +117,11 @@ class Role(RestObject):
 
 
 class Group(RestObject):
+    """
+    Non-academic version of course section; holds members, events, documents,
+    etc.
+    """
+
     _REALM_TYPE = 'group'
     _PROPERTIES = {'id': int,
                    'title': str,
@@ -123,9 +138,16 @@ class Group(RestObject):
     school = LazyProperty('school_id', int, School)
     building = LazyProperty('building_id', int, Building)
 
+    @property
+    def enrollments(self):
+        return [Enrollment(data=d, realm=self) for d in
+                self.API._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
+
 
 # TODO: investigate requesting with ?extended=TRUE
 class User(RestObject):
+    """Account corresponding to a user"""
+
     _REALM_TYPE = 'user'
     _PROPERTIES = {'id': int,
                    'synced': bool,
@@ -162,6 +184,16 @@ class User(RestObject):
 
     def __str__(self):
         return self.name_display
+
+    @property
+    def groups(self):
+        return [Group(data=d) for d in
+                self.API._get_depaginate(self.rest_path() + '/groups', 'group')]
+
+    @property
+    def sections(self):
+        return [Section(data=d) for d in
+                self.API._get_depaginate(self.rest_path() + '/sections', 'section')]
 
 
 class GradingPeriod(RestObject):
@@ -243,6 +275,19 @@ class Section(RestObject):
     building = LazyProperty('building_id', int, Building)
     title = LazyProperty('section_title', str)
 
+    def __str__(self):
+        return f"{self.course_title.strip()} ({self.grading_periods[0].title.strip()})"
+
+    @property
+    def enrollments(self):
+        return [Enrollment(data=d, realm=self) for d in
+                self.API._get_depaginate(self.rest_path() + '/enrollments', 'enrollment')]
+
+    @property
+    def assignments(self):
+        return [Assignment(data=d, realm=self) for d in
+                self.API._get(self.rest_path() + '/grade_items')['assignment']]
+
 
 class Enrollment(RestObject):
     _REST_PATH = '/{realm_type}s/{realm_id}/enrollments/{id}'
@@ -283,3 +328,42 @@ class Collection(RestObject):
         if self.realm_id is None:
             return None
         return REALMS[self.realm_type](self.realm_id)
+
+
+class Assignment(RestObject):
+    _REST_PATH = '/{realm_type}s/{realm_id}/grade_items/{id}'
+    _PROPERTIES = {'id': int,
+                   'title': str,
+                   'description': str,
+                   'due': parsedatetime,
+                   'grading_scale': int,  # TODO: add GradingScale
+                   'grading_period': GradingPeriod,
+                   'grading_category': int,  # TODO: add GradingCategory
+                   'max_points': float,
+                   'factor': float,
+                   'is_final': lambda x: bool(int(x)),
+                   'show_comments': lambda x: bool(int(x)),
+                   'grade_stats': lambda x: bool(int(x)),
+                   'allow_dropbox': lambda x: bool(int(x)),
+                   'allow_discussion': lambda x: bool(int(x)),
+                   'published': lambda x: bool(int(x)),
+                   'type': GradeItemType.__getitem__,
+                   # TODO: consider GradeItem as a supertype?
+                   # 'grade_item_id': 2401485639,  // 0 for grade_column, discussion_id for discussion
+                   'available': bool,
+                   'completed': bool,
+                   'dropbox_locked': bool,
+                   'grading_scale_type': GradingScaleType,
+                   'show_rubric': bool,
+                   'display_weight': int,
+                   'assignment_type': str,  # Undocumented
+                   'web_url': str,
+                   # Can just use len(asmt.assignees)
+                   # 'num_assignees': int,
+                   'assignees': list,  # TODO: needs access to "self"
+                   'grading_group_ids': list,  # TODO: add GradingGroup
+                   'last_updated': lambda s: datetime.fromtimestamp(int(s)),
+                   'completion_status': str}
+
+    # TODO: needs access to "self"
+    # folder = LazyProperty('folder_id', lambda fid: Folder(fid, realm=self.realm))
