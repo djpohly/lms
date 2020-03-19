@@ -21,6 +21,7 @@ def LazyProperty(name, *fns):
     return property(_get)
 
 
+# TODO: re-add object caching by ID (or rest_path)
 class RestObject:
     API = None
 
@@ -34,7 +35,7 @@ class RestObject:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        if hasattr(cls, '_REALM_TYPE'):
+        if getattr(cls, '_REALM_TYPE', None):
             REALMS[cls._REALM_TYPE] = cls
         for name, ctor in cls._PROPERTIES.items():
             setattr(cls, name, LazyProperty(name, ctor))
