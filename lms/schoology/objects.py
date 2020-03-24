@@ -298,6 +298,11 @@ class Section(RestObject):
         return [Assignment(d, realm=self) for d in
                 self.API._get(self.rest_path() + '/grade_items')['assignment']]
 
+    @property
+    def updates(self):
+        return [Update(d, realm=self) for d in
+                self.API._get_depaginate(self.rest_path() + '/updates', 'update')]
+
 
 class Enrollment(RestObject):
     _REST_PATH = '/{realm_type}s/{realm_id}/enrollments/{id}'
@@ -438,3 +443,39 @@ class MessageThread(RestObject):
         # XXX this is a hack, since the original contains {'message': None} and
         # prevents a reload because the key is present
         del self._data['message']
+
+
+class Update(RestObject):
+    _REST_PATH = '/{realm_type}s/{realm_id}/updates/{id}'
+    _PROPERTIES = {'id': int,
+                   'body': str,
+                   'uid': int,
+                   'created': datetime.fromtimestamp,
+                   'last_updated': lambda x: datetime.fromtimestamp(int(x)),
+                   'likes': int,
+                   'user_like_action': bool,  # Undocumented
+                   'num_comments': int}
+
+    def __str__(self):
+        return self.body
+
+    @property
+    def comments(self):
+        return [UpdateComment(dict(update_id=self.id, **d), realm=self.realm) for d in
+                self.API._get(self.rest_path() + '/comments')['comment']]
+
+
+class UpdateComment(RestObject):
+    _REST_PATH = '/{realm_type}s/{realm_id}/updates/{update_id}/comments/{id}'
+    _PROPERTIES = {'id': int,
+                   'comment': str,
+                   'created': datetime.fromtimestamp,
+                   'parent_id': int,  # Undocumented
+                   'status': int,  # Undocumented
+                   'likes': int,
+                   'user_like_action': bool}  # Undocumented
+
+    user = LazyProperty('uid', User)
+
+    def __str__(self):
+        return self.comment
