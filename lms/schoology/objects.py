@@ -44,6 +44,7 @@ class RestObject:
     def __init__(self, id_or_data, *args, realm=None, **kwargs):
         super().__init__(*args, **kwargs)
         if realm is not None:
+            self.realm = realm
             self.realm_type = realm._REALM_TYPE
             self.realm_id = realm.id
         if isinstance(id_or_data, dict):
