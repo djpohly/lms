@@ -381,6 +381,32 @@ class Assignment(RestObject):
         return (self.realm_type, self.realm_id, self.id)
 
 
+class Grade(RestObject):
+    _REST_PATH = '/{realm_type}s/{realm_id}/grade_items/{id}'
+    _PROPERTIES = {'grade': int,
+                   'exception': GradeException,
+                   'max_points': int,
+                   'is_final': bool,
+                   'timestamp': datetime.fromtimestamp,
+                   'comment': str,
+                   'comment_status': str,  # Undocumented
+                   'override': str,  # Undocumented
+                   'calculated_grade': str,  # Undocumented
+                   'pending': str,  # Undocumented
+                   'type': GradeItemType.__getitem__,
+                   'location': str,
+                   'scale_id': int,  # TODO: add GradingScale
+                   'scale_type': GradingScaleType,
+                   'assignment_type': str,  # Undocumented
+                   'web_url': str,
+                   'category_id': int,  # TODO: add GradingCategory
+                   'school_uid': str}
+
+    # TODO: needs access to "self"
+    # enrollment = LazyProperty('enrollment_id', lambda eid: Enrollment(eid, realm=self.realm))
+    # assignment = LazyProperty('assignment_id', lambda eid: Enrollment(eid, realm=self.realm))
+
+
 class Message(RestObject):
     # Messages are immutable and are included entirely with the thread, so
     # there is no need for updates

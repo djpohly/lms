@@ -21,6 +21,12 @@ class Gender(Enum):
     F = auto()
 
 
+class GradeException(Enum):
+    NONE = 0
+    EXCUSED = 1
+    INCOMPLETE = 2
+
+
 class GradeItemType(Enum):
     assignment = auto()
     assessment = auto()
